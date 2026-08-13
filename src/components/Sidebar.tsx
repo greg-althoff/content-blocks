@@ -196,17 +196,17 @@ export function Sidebar({
       <div className="mt-auto flex flex-col gap-2 px-4 pb-[42px]">
         <button
           type="button"
-          onClick={onExport}
+          onClick={onShare}
           className="flex w-full items-center justify-center rounded-lg bg-accent px-3.5 py-3 text-[14px] font-medium leading-none text-white transition-colors hover:bg-accent-dark"
         >
           <span className="inline-flex items-center gap-1.5">
-            <ExportIcon className="block h-5 w-5" />
-            Export PNG
+            <ShareIcon className="block h-5 w-5" />
+            Share
           </span>
         </button>
         <div className="flex gap-3">
           <ToolButton icon={<PlusIcon className="h-4 w-4" />} label="New" onClick={onNew} />
-          <ToolButton icon={<ShareIcon className="h-4 w-4" />} label="Share" onClick={onShare} />
+          <ToolButton icon={<ExportIcon className="h-4 w-4" />} label="Export PNG" onClick={onExport} />
         </div>
       </div>
 
