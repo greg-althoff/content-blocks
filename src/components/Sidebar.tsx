@@ -54,6 +54,7 @@ function DraggableToolButton({
   label,
   onClick,
   iconClass = 'h-8 w-8',
+  iconOffsetClass,
   paddingLeftClass = 'pl-[32px]',
 }: {
   id: string;
@@ -61,6 +62,7 @@ function DraggableToolButton({
   label: string;
   onClick: () => void;
   iconClass?: string;
+  iconOffsetClass?: string;
   paddingLeftClass?: string;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id });
@@ -79,7 +81,7 @@ function DraggableToolButton({
       {...attributes}
     >
       <span className={cn('flex shrink-0 items-center justify-start', iconClass)}>
-        <img src={iconSrc} alt="" className={cn(iconClass, 'object-contain')} />
+        <img src={iconSrc} alt="" className={cn(iconClass, 'object-contain', iconOffsetClass)} />
       </span>
       <span>{label}</span>
     </button>
@@ -159,7 +161,7 @@ export function Sidebar({
           iconSrc={TOOL_ICONS.focus}
           label="Focus Point"
           onClick={onAddFocus}
-          iconClass="h-5 w-5"
+          iconClass="h-6 w-6"
         />
         <DraggableToolButton
           id={SidebarToolId.content}
@@ -173,6 +175,8 @@ export function Sidebar({
           iconSrc={TOOL_ICONS.cta}
           label="Call to Action"
           onClick={onAddCta}
+          iconClass="h-8 w-[28px]"
+          iconOffsetClass="relative top-[3px]"
           paddingLeftClass="pl-[29px]"
         />
         <DraggableToolButton
@@ -196,7 +200,7 @@ export function Sidebar({
           className="flex w-full items-center justify-center rounded-lg bg-accent px-3.5 py-3 text-[14px] font-medium leading-none text-white transition-colors hover:bg-accent-dark"
         >
           <span className="inline-flex items-center gap-1.5">
-            <ExportIcon className="block h-4 w-4" />
+            <ExportIcon className="block h-5 w-5" />
             Export PNG
           </span>
         </button>
@@ -207,7 +211,14 @@ export function Sidebar({
       </div>
 
       <div className="px-5 pb-5 pt-2 text-center text-[10px] font-medium uppercase tracking-[0.22em] text-gray-500">
-        <div>© Creative Isles</div>
+        <a
+          href="https://www.creativeisles.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block hover:underline hover:decoration-dotted hover:underline-offset-2"
+        >
+          © Creative Isles
+        </a>
         <div className="pt-1.5 text-white">VER 1.0</div>
       </div>
     </aside>
