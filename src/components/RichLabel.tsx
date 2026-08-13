@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '../lib/cn';
+import { insertEmDashInContentEditable, replaceDoubleHyphensInEditor } from '../lib/emDash';
 import { labelPlainText, sanitizeLabelHtml } from '../lib/richText';
 
 interface RichLabelProps {
@@ -35,6 +36,7 @@ export function RichLabel({ value, onChange, placeholder = 'Untitled', className
   const emit = useCallback(() => {
     const el = editorRef.current;
     if (!el) return;
+    replaceDoubleHyphensInEditor(el);
     const html = sanitizeLabelHtml(el.innerHTML);
     if (!labelPlainText(html) && html !== '') {
       el.innerHTML = '';
@@ -99,6 +101,16 @@ export function RichLabel({ value, onChange, placeholder = 'Untitled', className
         onClick={(event) => event.stopPropagation()}
         onPointerDown={(event) => event.stopPropagation()}
         onInput={emit}
+        onBeforeInput={(event) => {
+          const native = event.nativeEvent as InputEvent;
+          if (native.inputType !== 'insertText' || native.data !== '-') return;
+          const el = editorRef.current;
+          if (!el) return;
+          if (insertEmDashInContentEditable(el)) {
+            event.preventDefault();
+            emit();
+          }
+        }}
         onBlur={() => {
           emit();
           setToolbar(null);

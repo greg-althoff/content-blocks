@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '../lib/cn';
+import { emDashFromHyphen } from '../lib/emDash';
 
 interface InlineEditProps {
   value: string;
@@ -74,6 +75,23 @@ export function InlineEdit({
         onClick={(event) => event.stopPropagation()}
         onKeyDown={(event) => {
           event.stopPropagation();
+          if (event.key === '-' && !event.metaKey && !event.ctrlKey && !event.altKey) {
+            const input = event.currentTarget;
+            const start = input.selectionStart ?? 0;
+            const end = input.selectionEnd ?? 0;
+            const replaced = emDashFromHyphen(draftRef.current, start, end);
+            if (replaced) {
+              event.preventDefault();
+              const next =
+                maxLength != null ? replaced.value.slice(0, maxLength) : replaced.value;
+              setDraft(next);
+              requestAnimationFrame(() => {
+                const pos = Math.min(replaced.caret, next.length);
+                input.setSelectionRange(pos, pos);
+              });
+              return;
+            }
+          }
           if (event.key === 'Enter') {
             event.preventDefault();
             event.currentTarget.blur();
