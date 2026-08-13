@@ -185,6 +185,15 @@ function EmptyState({ dropEnabled }: { dropEnabled: boolean }) {
         <p className="mt-1 text-sm text-gray-400">
           Add a Focus Point or Content Block from the sidebar to start mapping hierarchy.
         </p>
+        <a
+          href="/ContentBlocks-Introduction.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(event) => event.stopPropagation()}
+          className="mt-5 inline-flex items-center justify-center rounded-md border border-[#3B82F6] bg-white px-4 py-2 text-[13px] font-medium text-[#3B82F6] hover:bg-blue-50"
+        >
+          Learn How
+        </a>
       </div>
     </div>
   );
