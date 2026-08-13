@@ -19,8 +19,12 @@ import { isBlock } from '../types';
 const MAX_CTAS = 2;
 
 export function useContentBlocks() {
-  const startBlank = isNewPageRequest();
-  const hashOnLoad = startBlank ? '' : typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
+  // Capture once: recomputing these from window.location on re-renders makes the
+  // decode effect re-run after the app writes a new hash, reverting fresh edits.
+  const [startBlank] = useState(isNewPageRequest);
+  const [hashOnLoad] = useState(() =>
+    startBlank || typeof window === 'undefined' ? '' : window.location.hash.slice(1),
+  );
   const [state, setState] = useState<AppState>(() => (startBlank ? createEmptyState() : getFallbackState()));
   const [ready, setReady] = useState(!hashOnLoad);
   const [selectedId, setSelectedId] = useState<string | null>(null);

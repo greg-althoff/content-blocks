@@ -24,25 +24,40 @@ export function InlineEdit({
 }: InlineEditProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
-  const ref = useRef<HTMLInputElement>(null);
+  const valueRef = useRef(value);
+  const draftRef = useRef(draft);
+  const editingRef = useRef(editing);
+  const ignoreClickRef = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  valueRef.current = value;
+  draftRef.current = draft;
+  editingRef.current = editing;
 
   useEffect(() => {
-    setDraft(value);
-  }, [value]);
+    if (!editing) setDraft(value);
+  }, [value, editing]);
 
   useEffect(() => {
     if (editing) {
-      ref.current?.focus();
-      ref.current?.select();
+      inputRef.current?.focus();
+      inputRef.current?.select();
     }
   }, [editing]);
 
   const commit = () => {
+    if (!editingRef.current) return;
+    editingRef.current = false;
     setEditing(false);
-    const trimmed = draft.trim();
+    ignoreClickRef.current = true;
+    window.setTimeout(() => {
+      ignoreClickRef.current = false;
+    }, 0);
+
+    const trimmed = draftRef.current.trim();
     const next = maxLength != null ? trimmed.slice(0, maxLength) : trimmed;
-    if (next && next !== value) onChange(next);
-    else setDraft(value);
+    if (next && next !== valueRef.current) onChange(next);
+    else setDraft(valueRef.current);
   };
 
   const alignClass =
@@ -51,7 +66,7 @@ export function InlineEdit({
   if (editing) {
     return (
       <input
-        ref={ref}
+        ref={inputRef}
         value={draft}
         maxLength={maxLength}
         onChange={(event) => setDraft(event.target.value)}
@@ -59,9 +74,13 @@ export function InlineEdit({
         onClick={(event) => event.stopPropagation()}
         onKeyDown={(event) => {
           event.stopPropagation();
-          if (event.key === 'Enter') commit();
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            event.currentTarget.blur();
+          }
           if (event.key === 'Escape') {
-            setDraft(value);
+            setDraft(valueRef.current);
+            editingRef.current = false;
             setEditing(false);
           }
         }}
@@ -82,15 +101,16 @@ export function InlineEdit({
       type="button"
       onClick={(event) => {
         event.stopPropagation();
+        if (ignoreClickRef.current) return;
         setEditing(true);
       }}
-        className={cn(
-          'block min-w-0 cursor-text rounded-sm hover:bg-black/[0.03]',
-          fullWidth ? 'w-full' : 'w-auto',
-          alignClass,
-          !value && 'text-gray-400',
-          className,
-        )}
+      className={cn(
+        'block min-w-0 cursor-text rounded-sm hover:bg-black/[0.03]',
+        fullWidth ? 'w-full' : 'w-auto',
+        alignClass,
+        !value && 'text-gray-400',
+        className,
+      )}
     >
       {value ? value : placeholder}
     </button>
