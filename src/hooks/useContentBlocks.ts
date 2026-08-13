@@ -9,6 +9,7 @@ import {
   saveLocalState,
   clearLocalState,
 } from '../lib/persistence';
+import { copyTextFromAsync } from '../lib/clipboard';
 import { isPristineEmpty } from '../lib/richText';
 import type { AppState, BlockItem, CanvasItem, Meta } from '../types';
 import { isBlock } from '../types';
@@ -220,15 +221,34 @@ export function useContentBlocks() {
   }, []);
 
   const share = useCallback(async () => {
-    try {
+    let url = '';
+    const makeUrl = async () => {
       const encoded = await encodeState(state);
-      const url = `${window.location.origin}${window.location.pathname}${window.location.search}#${encoded}`;
+      url = `${window.location.origin}${window.location.pathname}${window.location.search}#${encoded}`;
       history.replaceState(null, '', `#${encoded}`);
-      await navigator.clipboard.writeText(url);
-      showToast('Copied!');
+      return url;
+    };
+
+    try {
+      const copied = await copyTextFromAsync(makeUrl);
+      if (copied) {
+        showToast('Copied!');
+        return;
+      }
     } catch {
-      showToast('Could not copy link');
+      // Fall through to the prompt so Safari still has a way to copy.
     }
+
+    if (!url) {
+      try {
+        url = await makeUrl();
+      } catch {
+        showToast('Could not copy link');
+        return;
+      }
+    }
+
+    window.prompt('Copy this share link:', url);
   }, [showToast, state]);
 
   return {
