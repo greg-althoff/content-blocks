@@ -5,9 +5,9 @@ import { cn } from '../lib/cn';
 import { SidebarToolId, type SidebarTool } from '../lib/dnd';
 
 const TOOL_ICONS = {
-  focus: '/icons/Icon_ Focus Point.png?v=3',
+  focus: '/icons/Icon_ Focus Point.png?v=4',
   content: '/icons/Icon_ Content Block.png?v=3',
-  cta: '/icons/Icon_ Call to Action.png?v=3',
+  cta: '/icons/Icon_ Call to Action.png?v=4',
   fold: '/icons/Icon_ the Fold.png?v=3',
   footer: '/icons/Icon_ the Footer.png?v=3',
 } as const;
