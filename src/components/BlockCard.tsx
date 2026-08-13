@@ -122,7 +122,7 @@ export function BlockCard({
           <DragHandle className="h-4 w-2.5" />
         </button>
 
-        <div className="min-w-0 flex-1 overflow-hidden pr-3 select-text" style={{ maxWidth: '52%' }}>
+        <div className="min-w-0 flex-1 overflow-hidden pr-3 select-text">
           <RichLabel
             value={item.label}
             onChange={onLabelChange}
@@ -131,7 +131,7 @@ export function BlockCard({
           />
         </div>
 
-        <div className="ml-auto flex min-w-[42%] shrink-0 items-center justify-end gap-2">
+        <div className="flex shrink-0 items-center justify-end gap-2">
           {item.ctas.map((cta, index) => (
             <CtaChip
               key={`${item.id}-cta-${index}`}
