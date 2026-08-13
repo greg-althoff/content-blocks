@@ -36,10 +36,10 @@ function ToolButton({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full flex-1 items-center justify-center rounded-lg border border-white/20 bg-transparent px-2 py-3 text-center text-[14px] leading-none tracking-[0.02em] text-gray-300 transition-colors hover:border-transparent hover:bg-sidebar-button hover:text-white"
+      className="flex w-full flex-1 items-center justify-center rounded-lg border border-white/20 bg-transparent px-2 py-3 text-center text-[14px] leading-none tracking-[0.02em] text-white transition-colors hover:border-transparent hover:bg-sidebar-button"
     >
       <span className="inline-flex items-center gap-1.5">
-        <span className="flex h-4 w-4 shrink-0 items-center justify-center text-gray-400 [&_svg]:block">
+        <span className="flex h-4 w-4 shrink-0 items-center justify-center text-white [&_svg]:block">
           {icon}
         </span>
         <span>{label}</span>
@@ -73,7 +73,7 @@ function DraggableToolButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-[45px] w-full cursor-grab items-center justify-start gap-3 rounded-lg border border-white/20 bg-transparent py-0 pr-3.5 text-left text-[14px] leading-none tracking-[0.02em] text-gray-300 transition-colors hover:border-transparent hover:bg-sidebar-button hover:text-white active:cursor-grabbing',
+        'flex h-[45px] w-full cursor-grab items-center justify-start gap-3 rounded-lg border border-white/20 bg-transparent py-0 pr-3.5 text-left text-[14px] leading-none tracking-[0.02em] text-white transition-colors hover:border-transparent hover:bg-sidebar-button active:cursor-grabbing',
         paddingLeftClass,
         isDragging && 'opacity-40',
       )}
