@@ -3,6 +3,7 @@ import { createEmptyState } from '../defaultState';
 import { sanitizeLabelHtml } from './richText';
 
 export const STORAGE_KEY = 'content-blocks:v2';
+export const NEW_PAGE_PARAM = 'new';
 const HASH_PREFIX = 'cb1.';
 
 function bytesToBase64Url(bytes: Uint8Array): string {
@@ -129,4 +130,21 @@ export function clearLocalState(): void {
 
 export function getFallbackState(): AppState {
   return loadLocalState() ?? createEmptyState();
+}
+
+export function isNewPageRequest(): boolean {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).get(NEW_PAGE_PARAM) === '1';
+}
+
+export function newPageUrl(): string {
+  return `${window.location.origin}${window.location.pathname}?${NEW_PAGE_PARAM}=1`;
+}
+
+export function stripNewPageParam(): void {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get(NEW_PAGE_PARAM) !== '1') return;
+  params.delete(NEW_PAGE_PARAM);
+  const search = params.toString();
+  history.replaceState(null, '', window.location.pathname + (search ? `?${search}` : ''));
 }

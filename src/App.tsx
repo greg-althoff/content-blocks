@@ -13,7 +13,6 @@ import {
 } from '@dnd-kit/core';
 import { v4 as uuid } from 'uuid';
 import { Canvas, CanvasItemPreview } from './components/Canvas';
-import { ConfirmDialog } from './components/ConfirmDialog';
 import { Sidebar, SidebarToolPreview } from './components/Sidebar';
 import { Toast } from './components/Toast';
 import { useContentBlocks } from './hooks/useContentBlocks';
@@ -23,7 +22,6 @@ import {
   parseGapIndex,
   parseSidebarTool,
 } from './lib/dnd';
-import { isPristineEmpty } from './lib/richText';
 import type { CanvasItem } from './types';
 
 function slugify(value: string): string {
@@ -49,7 +47,6 @@ export default function App() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragOccurredRef = useRef(false);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [newConfirmOpen, setNewConfirmOpen] = useState(false);
   const {
     ready,
     state,
@@ -70,7 +67,7 @@ export default function App() {
     removeCta,
     removeItem,
     reorder,
-    resetNew,
+    openNewPage,
     share,
   } = useContentBlocks();
 
@@ -240,13 +237,7 @@ export default function App() {
           onAddCta={unlessDrag(() => addCta())}
           onAddFold={unlessDrag(() => addMarker('fold'))}
           onAddFooter={unlessDrag(() => addMarker('footer'))}
-          onNew={() => {
-            if (isPristineEmpty(state)) {
-              showToast('Page is already empty');
-              return;
-            }
-            setNewConfirmOpen(true);
-          }}
+          onNew={openNewPage}
           onShare={() => void share()}
           onExport={() => void exportPng()}
         />
@@ -269,17 +260,6 @@ export default function App() {
         </main>
 
         <Toast message={toast} />
-        <ConfirmDialog
-          open={newConfirmOpen}
-          title="Start a new page?"
-          message="The current canvas will be cleared."
-          confirmLabel="New page"
-          onCancel={() => setNewConfirmOpen(false)}
-          onConfirm={() => {
-            setNewConfirmOpen(false);
-            resetNew();
-          }}
-        />
       </div>
 
       <DragOverlay dropAnimation={null} style={{ background: 'transparent', cursor: 'grabbing' }}>

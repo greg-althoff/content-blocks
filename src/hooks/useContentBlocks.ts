@@ -6,8 +6,10 @@ import {
   decodeState,
   encodeState,
   getFallbackState,
+  isNewPageRequest,
+  newPageUrl,
   saveLocalState,
-  clearLocalState,
+  stripNewPageParam,
 } from '../lib/persistence';
 import { copyTextFromAsync } from '../lib/clipboard';
 import { isPristineEmpty } from '../lib/richText';
@@ -17,13 +19,13 @@ import { isBlock } from '../types';
 const MAX_CTAS = 2;
 
 export function useContentBlocks() {
-  const hashOnLoad = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
-  const [state, setState] = useState<AppState>(getFallbackState);
+  const startBlank = isNewPageRequest();
+  const hashOnLoad = startBlank ? '' : typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
+  const [state, setState] = useState<AppState>(() => (startBlank ? createEmptyState() : getFallbackState()));
   const [ready, setReady] = useState(!hashOnLoad);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
-  const skipHashRef = useRef(false);
   const persistGen = useRef(0);
   const persistTimer = useRef<ReturnType<typeof setTimeout>>();
   const toastTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -33,6 +35,10 @@ export function useContentBlocks() {
     window.clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(null), 1800);
   }, []);
+
+  useEffect(() => {
+    if (startBlank) stripNewPageParam();
+  }, [startBlank]);
 
   useEffect(() => {
     if (!hashOnLoad) return;
@@ -53,12 +59,6 @@ export function useContentBlocks() {
 
   useEffect(() => {
     if (!ready) return;
-    if (skipHashRef.current) {
-      skipHashRef.current = false;
-      clearLocalState();
-      history.replaceState(null, '', window.location.pathname + window.location.search);
-      return;
-    }
     if (isPristineEmpty(state) && !window.location.hash.slice(1)) {
       return;
     }
@@ -212,11 +212,11 @@ export function useContentBlocks() {
     });
   }, []);
 
-  const resetNew = useCallback(() => {
-    skipHashRef.current = true;
-    setSelectedId(null);
-    setState(createEmptyState());
-  }, []);
+  const openNewPage = useCallback(() => {
+    const opened = window.open(newPageUrl(), '_blank');
+    if (opened) opened.opener = null;
+    if (!opened) showToast('Allow pop-ups to open a new page');
+  }, [showToast]);
 
   const share = useCallback(async () => {
     let url = '';
@@ -270,7 +270,7 @@ export function useContentBlocks() {
     removeCta,
     removeItem,
     reorder,
-    resetNew,
+    openNewPage,
     share,
   };
 }
