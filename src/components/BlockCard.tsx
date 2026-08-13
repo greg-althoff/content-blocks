@@ -156,7 +156,7 @@ export function BlockCard({
                 selected && 'flex',
               )}
             >
-              + CTA
+              Add CTA
             </button>
           )}
         </div>
