@@ -36,14 +36,12 @@ function ToolButton({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full flex-1 items-center justify-center rounded-lg border border-white/20 bg-transparent px-2 py-3 text-center text-[14px] leading-none tracking-[0.02em] text-white transition-colors hover:border-transparent hover:bg-sidebar-button"
+      className="flex h-[45px] w-full items-center justify-center gap-1.5 rounded-lg border border-white/20 bg-transparent px-3 text-center text-[14px] leading-none tracking-[0.02em] text-white transition-colors hover:border-transparent hover:bg-sidebar-button"
     >
-      <span className="inline-flex items-center gap-1.5">
-        <span className="flex h-4 w-4 shrink-0 items-center justify-center text-white [&_svg]:block">
-          {icon}
-        </span>
-        <span>{label}</span>
+      <span className="flex h-4 w-4 shrink-0 items-center justify-center text-white [&_svg]:block">
+        {icon}
       </span>
+      <span>{label}</span>
     </button>
   );
 }
@@ -151,9 +149,20 @@ export function Sidebar({
 }: SidebarProps) {
   return (
     <aside className="flex h-full w-sidebar shrink-0 flex-col overflow-y-auto bg-sidebar text-white">
-      <div className="flex justify-center px-5 pb-6 pt-6">
+      <div className="flex justify-center px-5 pb-8 pt-6">
         <img src="/CBlocks-Logo.png" alt="ContentBlocks" width={160} className="h-auto w-[160px]" />
       </div>
+
+      <div className="px-4">
+        <ToolButton icon={<PlusIcon className="h-4 w-4" />} label="New Page" onClick={onNew} />
+      </div>
+      <div
+        className="my-4 h-px w-full"
+        style={{
+          backgroundImage:
+            'repeating-linear-gradient(to right, rgba(255,255,255,0.28) 0 2px, transparent 2px 5px)',
+        }}
+      />
 
       <nav className="flex flex-1 flex-col gap-2 px-4">
         <DraggableToolButton
@@ -204,10 +213,16 @@ export function Sidebar({
             Share
           </span>
         </button>
-        <div className="flex gap-3">
-          <ToolButton icon={<PlusIcon className="h-4 w-4" />} label="New" onClick={onNew} />
-          <ToolButton icon={<ExportIcon className="h-4 w-4" />} label="Export" onClick={onExport} />
-        </div>
+        <button
+          type="button"
+          onClick={onExport}
+          className="flex w-full items-center justify-center rounded-lg border border-white/20 bg-transparent px-3.5 py-3 text-[14px] leading-none tracking-[0.02em] text-white transition-colors hover:border-transparent hover:bg-sidebar-button"
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <ExportIcon className="block h-5 w-5" />
+            Export
+          </span>
+        </button>
       </div>
 
       <div className="px-5 pb-5 pt-2 text-center text-[10px] font-medium uppercase tracking-[0.22em] text-gray-500">
