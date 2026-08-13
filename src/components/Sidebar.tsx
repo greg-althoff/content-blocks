@@ -36,7 +36,7 @@ function ToolButton({
     <button
       type="button"
       onClick={onClick}
-      className="flex h-[45px] w-full items-center justify-center gap-1.5 rounded-lg border border-white/20 bg-transparent px-3 text-center text-[14px] leading-none tracking-[0.02em] text-white transition-colors hover:border-transparent hover:bg-sidebar-button"
+      className="flex h-[45px] w-full items-center justify-center gap-1.5 rounded-lg border border-transparent bg-sidebar-button px-3 text-center text-[14px] leading-none tracking-[0.02em] text-white transition-colors hover:bg-sidebar-hover"
     >
       <span className="flex h-4 w-4 shrink-0 items-center justify-center text-white [&_svg]:block">
         {icon}
