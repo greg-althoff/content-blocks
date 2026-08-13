@@ -206,7 +206,7 @@ export function Sidebar({
         </button>
         <div className="flex gap-3">
           <ToolButton icon={<PlusIcon className="h-4 w-4" />} label="New" onClick={onNew} />
-          <ToolButton icon={<ExportIcon className="h-4 w-4" />} label="Export PNG" onClick={onExport} />
+          <ToolButton icon={<ExportIcon className="h-4 w-4" />} label="Export" onClick={onExport} />
         </div>
       </div>
 
