@@ -213,8 +213,6 @@ export function useContentBlocks() {
   }, []);
 
   const resetNew = useCallback(() => {
-    const ok = window.confirm('Start a new page? The current canvas will be cleared.');
-    if (!ok) return;
     skipHashRef.current = true;
     setSelectedId(null);
     setState(createEmptyState());
