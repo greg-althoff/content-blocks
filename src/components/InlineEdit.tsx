@@ -9,6 +9,7 @@ interface InlineEditProps {
   placeholder?: string;
   align?: 'left' | 'center' | 'right';
   fullWidth?: boolean;
+  maxLength?: number;
 }
 
 export function InlineEdit({
@@ -19,6 +20,7 @@ export function InlineEdit({
   placeholder = 'Untitled',
   align = 'left',
   fullWidth = true,
+  maxLength,
 }: InlineEditProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -37,7 +39,8 @@ export function InlineEdit({
 
   const commit = () => {
     setEditing(false);
-    const next = draft.trim();
+    const trimmed = draft.trim();
+    const next = maxLength != null ? trimmed.slice(0, maxLength) : trimmed;
     if (next && next !== value) onChange(next);
     else setDraft(value);
   };
@@ -50,6 +53,7 @@ export function InlineEdit({
       <input
         ref={ref}
         value={draft}
+        maxLength={maxLength}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={commit}
         onClick={(event) => event.stopPropagation()}
