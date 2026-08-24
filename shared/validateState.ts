@@ -8,9 +8,9 @@ import {
   MAX_LABEL_TAG_DEPTH,
   MAX_META_FIELD_LENGTH,
   MAX_PAYLOAD_BYTES,
-} from './limits';
-import { labelPlainText, labelTagDepth, sanitizeLabelHtml } from './sanitizeLabel';
-import type { AppState, CanvasItem } from './types';
+} from './limits.js';
+import { labelPlainText, labelTagDepth, sanitizeLabelHtml } from './sanitizeLabel.js';
+import type { AppState, CanvasItem } from './types.js';
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
