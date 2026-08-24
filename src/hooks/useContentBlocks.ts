@@ -21,6 +21,11 @@ import {
   type SaveStatus,
 } from '../lib/shareApi';
 import { SharedPageSession } from '../lib/sharedPageSession';
+import {
+  INITIAL_SHARED_PAGE_SAVE_UI,
+  reduceSharedPageSaveUi,
+  type SharedPageSaveUiState,
+} from '../lib/sharedPageSaveUi';
 import { isPristineEmpty } from '../lib/richText';
 import type { AppState, BlockItem, CanvasItem, Meta } from '../types';
 import { isBlock } from '../types';
@@ -47,6 +52,9 @@ export function useContentBlocks() {
   const [sharedPageLoadError, setSharedPageLoadError] = useState(false);
   const [serverVersion, setServerVersion] = useState(1);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [sharedPageSaveUi, setSharedPageSaveUi] = useState<SharedPageSaveUiState>(
+    INITIAL_SHARED_PAGE_SAVE_UI,
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -64,6 +72,11 @@ export function useContentBlocks() {
     setToast(message);
     window.clearTimeout(toastTimer.current);
     toastTimer.current = window.setTimeout(() => setToast(null), 2800);
+  }, []);
+
+  const handleSaveStatusChange = useCallback((status: SaveStatus) => {
+    setSaveStatus(status);
+    setSharedPageSaveUi((prev) => reduceSharedPageSaveUi(prev, status));
   }, []);
 
   useEffect(() => {
@@ -107,7 +120,7 @@ export function useContentBlocks() {
         serverVersionRef.current = version;
         setServerVersion(version);
       },
-      onStatusChange: setSaveStatus,
+      onStatusChange: handleSaveStatusChange,
     });
     manager.setEnabled(false);
     saveManagerRef.current = manager;
@@ -145,6 +158,7 @@ export function useContentBlocks() {
     setSharedPageLoadError(false);
     setReady(false);
     setSaveStatus('idle');
+    setSharedPageSaveUi(INITIAL_SHARED_PAGE_SAVE_UI);
 
     fetchShare(liveShareId)
       .then((shared) => {
@@ -230,6 +244,11 @@ export function useContentBlocks() {
 
   const reloadSharedPage = useCallback(() => {
     window.location.reload();
+  }, []);
+
+  const retrySharedPageSave = useCallback(async () => {
+    if (!liveShareIdRef.current || !sharedPageSessionRef.current.canSharePut()) return;
+    await saveManagerRef.current?.flushSave(stateRef.current);
   }, []);
 
   const selected = state.items.find((item) => item.id === selectedId) ?? null;
@@ -455,6 +474,8 @@ export function useContentBlocks() {
     loadingSharedPage,
     sharedPageLoadError,
     saveStatus,
+    sharedPageSaveUi,
+    retrySharedPageSave,
     reloadSharedPage,
     toast,
     exporting,

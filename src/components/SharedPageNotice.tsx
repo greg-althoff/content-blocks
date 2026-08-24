@@ -1,45 +1,61 @@
-import type { SaveStatus } from '../lib/shareApi';
+import { useEffect, useRef, useState } from 'react';
+import {
+  markSharedNoticeDismissed,
+  sharedNoticeVisibleDurationMs,
+  SHARED_NOTICE_FADE_MS,
+  wasSharedNoticeDismissed,
+} from '../lib/sharedPageSaveUi';
+
+const NOTICE_COPY = 'Live shared page · Edits save automatically';
 
 type SharedPageNoticeProps = {
-  saveStatus: SaveStatus;
-  onReload?: () => void;
+  shareId: string;
 };
 
-const BASE_MESSAGE =
-  'Shared live page — anyone with this link can edit. Changes save automatically.';
+export function SharedPageNotice({ shareId }: SharedPageNoticeProps) {
+  const [visible, setVisible] = useState(() => !wasSharedNoticeDismissed(shareId));
+  const [fading, setFading] = useState(false);
+  const [mounted, setMounted] = useState(visible);
+  const dismissedRef = useRef(false);
 
-export function SharedPageNotice({ saveStatus, onReload }: SharedPageNoticeProps) {
-  const isConflict = saveStatus === 'conflict';
-  const tone = isConflict
-    ? 'border-amber-300 bg-amber-50 text-amber-950'
-    : 'border-sky-200 bg-sky-50 text-sky-950';
+  useEffect(() => {
+    if (!visible || dismissedRef.current) return;
 
-  let statusSuffix = '';
-  if (saveStatus === 'saving') statusSuffix = ' Saving…';
-  if (saveStatus === 'saved') statusSuffix = ' Saved';
-  if (saveStatus === 'failed') statusSuffix = ' Save failed';
+    const fadeTimer = window.setTimeout(() => {
+      setFading(true);
+    }, sharedNoticeVisibleDurationMs());
+
+    return () => {
+      window.clearTimeout(fadeTimer);
+    };
+  }, [visible, shareId]);
+
+  useEffect(() => {
+    if (!fading) return;
+
+    const removeTimer = window.setTimeout(() => {
+      dismissedRef.current = true;
+      markSharedNoticeDismissed(shareId);
+      setVisible(false);
+      setMounted(false);
+    }, SHARED_NOTICE_FADE_MS);
+
+    return () => {
+      window.clearTimeout(removeTimer);
+    };
+  }, [fading, shareId]);
+
+  if (!mounted) return null;
 
   return (
-    <div className={`border-b px-4 py-2 text-center text-sm ${tone}`} role="status">
-      {isConflict ? (
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <span>This page changed elsewhere—reload to get the latest version.</span>
-          {onReload ? (
-            <button
-              type="button"
-              onClick={onReload}
-              className="rounded border border-amber-400 bg-white px-2 py-0.5 text-sm font-medium text-amber-950 hover:bg-amber-100"
-            >
-              Reload
-            </button>
-          ) : null}
-        </div>
-      ) : (
-        <span>
-          {BASE_MESSAGE}
-          {statusSuffix}
-        </span>
-      )}
+    <div
+      className={`overflow-hidden border-b border-slate-200/80 bg-[#FAFAF8] px-4 py-2 text-center text-sm text-slate-700 transition-opacity duration-200 motion-reduce:transition-none ${
+        fading ? 'opacity-0' : 'opacity-100'
+      }`}
+      role="status"
+      aria-live="polite"
+    >
+      {NOTICE_COPY}
     </div>
   );
 }

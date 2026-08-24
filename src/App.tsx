@@ -15,6 +15,7 @@ import { v4 as uuid } from 'uuid';
 import { Canvas, CanvasItemPreview } from './components/Canvas';
 import { Sidebar, SidebarToolPreview } from './components/Sidebar';
 import { SharedPageNotice } from './components/SharedPageNotice';
+import { SharedPageSavePill } from './components/SharedPageSavePill';
 import { Toast } from './components/Toast';
 import { useContentBlocks } from './hooks/useContentBlocks';
 import { exportNodeToPng } from './lib/export';
@@ -73,7 +74,8 @@ export default function App() {
     liveShareId,
     loadingSharedPage,
     sharedPageLoadError,
-    saveStatus,
+    sharedPageSaveUi,
+    retrySharedPageSave,
     reloadSharedPage,
   } = useContentBlocks();
 
@@ -272,9 +274,7 @@ export default function App() {
         />
 
         <main className="canvas-scroll min-w-0 flex-1 overflow-auto">
-          {liveShareId ? (
-            <SharedPageNotice saveStatus={saveStatus} onReload={reloadSharedPage} />
-          ) : null}
+          {liveShareId ? <SharedPageNotice shareId={liveShareId} /> : null}
           <Canvas
             canvasRef={canvasRef}
             state={state}
@@ -292,6 +292,16 @@ export default function App() {
         </main>
 
         <Toast message={toast} />
+        {liveShareId ? (
+          <SharedPageSavePill
+            saving={sharedPageSaveUi.saving}
+            saved={sharedPageSaveUi.saved}
+            error={sharedPageSaveUi.error}
+            conflict={sharedPageSaveUi.conflict}
+            onRetry={() => void retrySharedPageSave()}
+            onReload={reloadSharedPage}
+          />
+        ) : null}
       </div>
 
       <DragOverlay dropAnimation={null} style={{ background: 'transparent', cursor: 'grabbing' }}>
