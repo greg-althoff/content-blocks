@@ -1,0 +1,19 @@
+export const MAX_PAYLOAD_BYTES = 512 * 1024;
+export const MAX_ITEMS = 200;
+export const MAX_META_FIELD_LENGTH = 500;
+export const MAX_LABEL_LENGTH = 5_000;
+export const MAX_CTA_LENGTH = 200;
+export const MAX_CTAS_PER_BLOCK = 2;
+export const MAX_ITEM_ID_LENGTH = 64;
+export const MAX_LABEL_TAG_DEPTH = 10;
+export const SHARE_RATE_LIMIT_MAX = 20;
+export const SHARE_RATE_LIMIT_WINDOW_MS = 3_600_000;
+export const SHARE_RATE_LIMIT_CLEANUP_MS = 48 * 3_600_000;
+export const SHARE_PUT_RATE_LIMIT_MAX = 120;
+export const SHARE_PUT_RATE_LIMIT_WINDOW_MS = 60_000;
+export const SHARE_AUTOSAVE_DEBOUNCE_MS = 800;
+export const SHARE_ID_LENGTH = 10;
+export const SHARE_ID_PATTERN = /^[0-9A-Za-z]{10}$/;
+
+export const ALLOWED_ITEM_TYPES = new Set(['focus', 'content', 'fold', 'footer']);
+export const ALLOWED_META_KEYS = new Set(['page', 'client', 'version', 'preparedBy', 'contact']);

@@ -1,6 +1,6 @@
-import type { AppState, CanvasItem } from '../types';
+import { sanitizeState } from '../../shared/validateState';
 import { createEmptyState } from '../defaultState';
-import { sanitizeLabelHtml } from './richText';
+import type { AppState } from '../types';
 
 export const STORAGE_KEY = 'content-blocks:v2';
 export const NEW_PAGE_PARAM = 'new';
@@ -38,46 +38,7 @@ async function gzipDecode(bytes: Uint8Array): Promise<string> {
   return new Response(stream).text();
 }
 
-function sanitizeState(raw: unknown): AppState | null {
-  if (!raw || typeof raw !== 'object') return null;
-  const candidate = raw as Partial<AppState>;
-  if (!candidate.meta || typeof candidate.meta !== 'object' || !Array.isArray(candidate.items)) {
-    return null;
-  }
-
-  const meta = candidate.meta;
-  const items: CanvasItem[] = [];
-
-  for (const item of candidate.items) {
-    if (!item || typeof item !== 'object' || typeof item.id !== 'string') continue;
-    if (item.type === 'fold' || item.type === 'footer') {
-      items.push({ id: item.id, type: item.type });
-      continue;
-    }
-    if (item.type === 'focus' || item.type === 'content') {
-      const ctas = Array.isArray(item.ctas)
-        ? item.ctas.filter((cta): cta is string => typeof cta === 'string').slice(0, 2)
-        : [];
-      items.push({
-        id: item.id,
-        type: item.type,
-        label: typeof item.label === 'string' ? sanitizeLabelHtml(item.label) : 'Untitled',
-        ctas,
-      });
-    }
-  }
-
-  return {
-    meta: {
-      page: typeof meta.page === 'string' ? meta.page : '',
-      client: typeof meta.client === 'string' ? meta.client : '',
-      version: typeof meta.version === 'string' ? meta.version : '1.0',
-      preparedBy: typeof meta.preparedBy === 'string' ? meta.preparedBy : '',
-      contact: typeof meta.contact === 'string' ? meta.contact : '',
-    },
-    items,
-  };
-}
+export { sanitizeState };
 
 export async function encodeState(state: AppState): Promise<string> {
   const compressed = await gzipEncode(JSON.stringify(state));

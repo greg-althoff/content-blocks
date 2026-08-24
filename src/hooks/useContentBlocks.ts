@@ -12,40 +12,173 @@ import {
   stripNewPageParam,
 } from '../lib/persistence';
 import { copyTextFromAsync } from '../lib/clipboard';
+import {
+  LiveShareSaveManager,
+  createShare,
+  fetchShare,
+  parseSharePath,
+  toAbsoluteShareUrl,
+  type SaveStatus,
+} from '../lib/shareApi';
+import { SharedPageSession } from '../lib/sharedPageSession';
 import { isPristineEmpty } from '../lib/richText';
 import type { AppState, BlockItem, CanvasItem, Meta } from '../types';
 import { isBlock } from '../types';
 
 const MAX_CTAS = 2;
+const HASH_FALLBACK_TOAST =
+  'Short-link service unavailable—copied an offline-compatible share link instead.';
 
 export function useContentBlocks() {
-  // Capture once: recomputing these from window.location on re-renders makes the
-  // decode effect re-run after the app writes a new hash, reverting fresh edits.
   const [startBlank] = useState(isNewPageRequest);
-  const [hashOnLoad] = useState(() =>
-    startBlank || typeof window === 'undefined' ? '' : window.location.hash.slice(1),
+  const [liveShareId, setLiveShareId] = useState<string | null>(() =>
+    typeof window === 'undefined' ? null : parseSharePath(),
   );
-  const [state, setState] = useState<AppState>(() => (startBlank ? createEmptyState() : getFallbackState()));
-  const [ready, setReady] = useState(!hashOnLoad);
+  const [hashOnLoad] = useState(() =>
+    startBlank || liveShareId || typeof window === 'undefined' ? '' : window.location.hash.slice(1),
+  );
+  const [state, setState] = useState<AppState>(() => {
+    if (startBlank || liveShareId) return createEmptyState();
+    return getFallbackState();
+  });
+  const [ready, setReady] = useState(!hashOnLoad && !liveShareId);
+  const [loadingSharedPage, setLoadingSharedPage] = useState(Boolean(liveShareId));
+  const [sharedPageHydrated, setSharedPageHydrated] = useState(false);
+  const [sharedPageLoadError, setSharedPageLoadError] = useState(false);
+  const [serverVersion, setServerVersion] = useState(1);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const persistGen = useRef(0);
-  const persistTimer = useRef<ReturnType<typeof setTimeout>>();
-  const toastTimer = useRef<ReturnType<typeof setTimeout>>();
+  const persistTimer = useRef<number | undefined>(undefined);
+  const toastTimer = useRef<number | undefined>(undefined);
+  const serverVersionRef = useRef(1);
+  const saveManagerRef = useRef<LiveShareSaveManager | null>(null);
+  const liveShareIdRef = useRef<string | null>(liveShareId);
+  const sharedPageSessionRef = useRef(new SharedPageSession());
+  const skipInitialFetchRef = useRef(false);
+  const stateRef = useRef(state);
 
   const showToast = useCallback((message: string) => {
     setToast(message);
     window.clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 1800);
+    toastTimer.current = window.setTimeout(() => setToast(null), 2800);
   }, []);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    serverVersionRef.current = serverVersion;
+  }, [serverVersion]);
+
+  useEffect(() => {
+    liveShareIdRef.current = liveShareId;
+  }, [liveShareId]);
 
   useEffect(() => {
     if (startBlank) stripNewPageParam();
   }, [startBlank]);
 
+  const recordSharedPageUserEdit = useCallback(() => {
+    if (sharedPageSessionRef.current.isHydrated()) {
+      sharedPageSessionRef.current.recordUserEdit();
+    }
+  }, []);
+
   useEffect(() => {
-    if (!hashOnLoad) return;
+    saveManagerRef.current?.destroy();
+    saveManagerRef.current = null;
+
+    if (!liveShareId) {
+      sharedPageSessionRef.current.reset();
+      setLoadingSharedPage(false);
+      setSharedPageHydrated(false);
+      setSharedPageLoadError(false);
+      return;
+    }
+
+    const manager = new LiveShareSaveManager({
+      shareId: liveShareId,
+      getServerVersion: () => serverVersionRef.current,
+      setServerVersion: (version) => {
+        serverVersionRef.current = version;
+        setServerVersion(version);
+      },
+      onStatusChange: setSaveStatus,
+    });
+    manager.setEnabled(false);
+    saveManagerRef.current = manager;
+
+    return () => {
+      manager.destroy();
+      if (saveManagerRef.current === manager) {
+        saveManagerRef.current = null;
+      }
+    };
+  }, [liveShareId]);
+
+  useEffect(() => {
+    if (!liveShareId) return;
+
+    let cancelled = false;
+
+    if (skipInitialFetchRef.current) {
+      skipInitialFetchRef.current = false;
+      sharedPageSessionRef.current.completeHydration();
+      saveManagerRef.current?.markLoaded(stateRef.current);
+      saveManagerRef.current?.setEnabled(true);
+      setSharedPageHydrated(true);
+      setLoadingSharedPage(false);
+      setSharedPageLoadError(false);
+      setReady(true);
+      return;
+    }
+
+    sharedPageSessionRef.current.beginLoad();
+    saveManagerRef.current?.setEnabled(false);
+
+    setLoadingSharedPage(true);
+    setSharedPageHydrated(false);
+    setSharedPageLoadError(false);
+    setReady(false);
+    setSaveStatus('idle');
+
+    fetchShare(liveShareId)
+      .then((shared) => {
+        if (cancelled) return;
+
+        saveManagerRef.current?.setEnabled(false);
+        saveManagerRef.current?.markLoaded(shared.state);
+        sharedPageSessionRef.current.completeHydration();
+        serverVersionRef.current = shared.version;
+        setServerVersion(shared.version);
+        setState(shared.state);
+        saveManagerRef.current?.setEnabled(true);
+        setSharedPageHydrated(true);
+        setLoadingSharedPage(false);
+        setReady(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        sharedPageSessionRef.current.failLoad();
+        saveManagerRef.current?.setEnabled(false);
+        setSharedPageLoadError(true);
+        setLoadingSharedPage(false);
+        setSharedPageHydrated(false);
+        setReady(true);
+        showToast('Could not load shared page');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [liveShareId, showToast]);
+
+  useEffect(() => {
+    if (!hashOnLoad || liveShareId) return;
     let cancelled = false;
     decodeState(hashOnLoad)
       .then((decoded) => {
@@ -59,10 +192,10 @@ export function useContentBlocks() {
     return () => {
       cancelled = true;
     };
-  }, [hashOnLoad]);
+  }, [hashOnLoad, liveShareId]);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || liveShareId) return;
     if (isPristineEmpty(state) && !window.location.hash.slice(1)) {
       return;
     }
@@ -78,19 +211,32 @@ export function useContentBlocks() {
         }
       });
     }, 120);
-  }, [state, ready]);
+  }, [state, ready, liveShareId]);
+
+  useEffect(() => {
+    if (!ready || !liveShareId || !sharedPageHydrated || sharedPageLoadError) return;
+    if (saveStatus === 'conflict') return;
+    if (!sharedPageSessionRef.current.canAutosave()) return;
+    saveManagerRef.current?.scheduleSave(state);
+  }, [state, ready, liveShareId, sharedPageHydrated, sharedPageLoadError, saveStatus]);
 
   useEffect(() => {
     return () => {
       window.clearTimeout(toastTimer.current);
       window.clearTimeout(persistTimer.current);
+      saveManagerRef.current?.destroy();
     };
+  }, []);
+
+  const reloadSharedPage = useCallback(() => {
+    window.location.reload();
   }, []);
 
   const selected = state.items.find((item) => item.id === selectedId) ?? null;
   const selectedBlock = selected && isBlock(selected) ? selected : null;
 
   const insertItem = useCallback((item: CanvasItem) => {
+    recordSharedPageUserEdit();
     setState((prev) => {
       const items = [...prev.items];
       const index = selectedId ? items.findIndex((entry) => entry.id === selectedId) : -1;
@@ -99,9 +245,10 @@ export function useContentBlocks() {
       return { ...prev, items };
     });
     setSelectedId(item.id);
-  }, [selectedId]);
+  }, [recordSharedPageUserEdit, selectedId]);
 
   const insertItemAt = useCallback((index: number, item: CanvasItem) => {
+    recordSharedPageUserEdit();
     setState((prev) => {
       if ((item.type === 'fold' || item.type === 'footer') && prev.items.some((entry) => entry.type === item.type)) {
         return prev;
@@ -112,7 +259,7 @@ export function useContentBlocks() {
       return { ...prev, items };
     });
     setSelectedId(item.id);
-  }, []);
+  }, [recordSharedPageUserEdit]);
 
   const addFocusPoint = useCallback(() => {
     insertItem({
@@ -153,6 +300,7 @@ export function useContentBlocks() {
       showToast('Maximum 2 CTAs per block');
       return;
     }
+    recordSharedPageUserEdit();
     setState((prev) => ({
       ...prev,
       items: prev.items.map((item) =>
@@ -162,22 +310,25 @@ export function useContentBlocks() {
       ),
     }));
     setSelectedId(target.id);
-  }, [selectedId, showToast, state.items]);
+  }, [recordSharedPageUserEdit, selectedId, showToast, state.items]);
 
   const updateMeta = useCallback((patch: Partial<Meta>) => {
+    recordSharedPageUserEdit();
     setState((prev) => ({ ...prev, meta: { ...prev.meta, ...patch } }));
-  }, []);
+  }, [recordSharedPageUserEdit]);
 
   const updateBlock = useCallback((id: string, patch: Partial<Pick<BlockItem, 'label' | 'ctas'>>) => {
+    recordSharedPageUserEdit();
     setState((prev) => ({
       ...prev,
       items: prev.items.map((item) =>
         item.id === id && isBlock(item) ? { ...item, ...patch } : item,
       ),
     }));
-  }, []);
+  }, [recordSharedPageUserEdit]);
 
   const updateCta = useCallback((id: string, index: number, value: string) => {
+    recordSharedPageUserEdit();
     setState((prev) => ({
       ...prev,
       items: prev.items.map((item) => {
@@ -187,9 +338,10 @@ export function useContentBlocks() {
         return { ...item, ctas };
       }),
     }));
-  }, []);
+  }, [recordSharedPageUserEdit]);
 
   const removeCta = useCallback((id: string, index: number) => {
+    recordSharedPageUserEdit();
     setState((prev) => ({
       ...prev,
       items: prev.items.map((item) => {
@@ -197,24 +349,26 @@ export function useContentBlocks() {
         return { ...item, ctas: item.ctas.filter((_, i) => i !== index) };
       }),
     }));
-  }, []);
+  }, [recordSharedPageUserEdit]);
 
   const removeItem = useCallback((id: string) => {
+    recordSharedPageUserEdit();
     setState((prev) => ({
       ...prev,
       items: prev.items.filter((item) => item.id !== id),
     }));
     setSelectedId((current) => (current === id ? null : current));
-  }, []);
+  }, [recordSharedPageUserEdit]);
 
   const reorder = useCallback((activeId: string, overId: string) => {
+    recordSharedPageUserEdit();
     setState((prev) => {
       const oldIndex = prev.items.findIndex((item) => item.id === activeId);
       const newIndex = prev.items.findIndex((item) => item.id === overId);
       if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return prev;
       return { ...prev, items: arrayMove(prev.items, oldIndex, newIndex) };
     });
-  }, []);
+  }, [recordSharedPageUserEdit]);
 
   const openNewPage = useCallback(() => {
     const opened = window.open(newPageUrl(), '_blank');
@@ -223,41 +377,85 @@ export function useContentBlocks() {
   }, [showToast]);
 
   const share = useCallback(async () => {
-    let url = '';
-    const makeUrl = async () => {
-      const encoded = await encodeState(state);
-      url = `${window.location.origin}${window.location.pathname}${window.location.search}#${encoded}`;
+    const currentLiveId = liveShareIdRef.current;
+
+    if (currentLiveId) {
+      if (!sharedPageSessionRef.current.canSharePut()) {
+        showToast('Shared page is still loading');
+        return;
+      }
+
+      const absoluteUrl = toAbsoluteShareUrl(`/p/${currentLiveId}`);
+      try {
+        await saveManagerRef.current?.flushSave(stateRef.current);
+        const copied = await copyTextFromAsync(async () => absoluteUrl);
+        if (copied) {
+          showToast('Copied!');
+          return;
+        }
+        window.prompt('Copy this share link:', absoluteUrl);
+      } catch {
+        showToast('Could not save shared page before copying link');
+      }
+      return;
+    }
+
+    const makeHashUrl = async () => {
+      const encoded = await encodeState(stateRef.current);
+      const url = `${window.location.origin}${window.location.pathname}${window.location.search}#${encoded}`;
       history.replaceState(null, '', `#${encoded}`);
       return url;
     };
 
     try {
-      const copied = await copyTextFromAsync(makeUrl);
+      const created = await createShare(stateRef.current);
+      skipInitialFetchRef.current = true;
+      history.replaceState(null, '', created.url);
+      serverVersionRef.current = created.version;
+      setServerVersion(created.version);
+      setLiveShareId(created.id);
+      liveShareIdRef.current = created.id;
+
+      const copied = await copyTextFromAsync(async () => created.absoluteUrl);
       if (copied) {
         showToast('Copied!');
         return;
       }
+      window.prompt('Copy this share link:', created.absoluteUrl);
+      return;
     } catch {
-      // Fall through to the prompt so Safari still has a way to copy.
+      // Fall back to hash-link sharing below.
     }
 
-    if (!url) {
-      try {
-        url = await makeUrl();
-      } catch {
-        showToast('Could not copy link');
+    try {
+      const copied = await copyTextFromAsync(makeHashUrl);
+      if (copied) {
+        showToast(HASH_FALLBACK_TOAST);
         return;
       }
+    } catch {
+      // Fall through to prompt.
     }
 
-    window.prompt('Copy this share link:', url);
-  }, [showToast, state]);
+    try {
+      const url = await makeHashUrl();
+      window.prompt('Copy this share link:', url);
+      showToast(HASH_FALLBACK_TOAST);
+    } catch {
+      showToast('Could not copy link');
+    }
+  }, [showToast]);
 
   return {
     ready,
     state,
     selectedId,
     selectedBlock,
+    liveShareId,
+    loadingSharedPage,
+    sharedPageLoadError,
+    saveStatus,
+    reloadSharedPage,
     toast,
     exporting,
     setExporting,

@@ -14,6 +14,7 @@ import {
 import { v4 as uuid } from 'uuid';
 import { Canvas, CanvasItemPreview } from './components/Canvas';
 import { Sidebar, SidebarToolPreview } from './components/Sidebar';
+import { SharedPageNotice } from './components/SharedPageNotice';
 import { Toast } from './components/Toast';
 import { useContentBlocks } from './hooks/useContentBlocks';
 import { exportNodeToPng } from './lib/export';
@@ -69,6 +70,11 @@ export default function App() {
     reorder,
     openNewPage,
     share,
+    liveShareId,
+    loadingSharedPage,
+    sharedPageLoadError,
+    saveStatus,
+    reloadSharedPage,
   } = useContentBlocks();
 
   const sensors = useSensors(
@@ -205,11 +211,34 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [removeItem, selectedId, setSelectedId]);
 
-  if (!ready) {
+  if (!ready || loadingSharedPage) {
     return (
       <div className="flex h-screen">
         <div className="w-sidebar bg-sidebar" />
         <div className="flex-1 bg-canvas" />
+      </div>
+    );
+  }
+
+  if (sharedPageLoadError) {
+    return (
+      <div className="flex h-screen">
+        <div className="w-sidebar bg-sidebar" />
+        <div className="flex flex-1 items-center justify-center bg-canvas px-6">
+          <div className="max-w-md text-center">
+            <h1 className="text-lg font-semibold text-slate-900">Could not load shared page</h1>
+            <p className="mt-2 text-sm text-slate-600">
+              This shared link could not be loaded. The page was not modified.
+            </p>
+            <button
+              type="button"
+              onClick={reloadSharedPage}
+              className="mt-4 rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 hover:bg-slate-50"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -243,6 +272,9 @@ export default function App() {
         />
 
         <main className="canvas-scroll min-w-0 flex-1 overflow-auto">
+          {liveShareId ? (
+            <SharedPageNotice saveStatus={saveStatus} onReload={reloadSharedPage} />
+          ) : null}
           <Canvas
             canvasRef={canvasRef}
             state={state}
