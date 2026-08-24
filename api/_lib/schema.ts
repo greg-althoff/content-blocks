@@ -10,7 +10,7 @@ export const sharedPages = sqliteTable(
     createdAt: integer('created_at', { mode: 'timestamp_ms' })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),
-    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().default(0),
+      updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().default(sql`0`),
     version: integer('version').notNull().default(1),
     expiresAt: integer('expires_at', { mode: 'timestamp_ms' }),
     revokedAt: integer('revoked_at', { mode: 'timestamp_ms' }),
