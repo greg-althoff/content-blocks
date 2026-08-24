@@ -1,22 +1,22 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { sanitizeState, validatePutBody } from '../../shared/validateState';
-import { getShareAdminSecret } from '../_lib/env';
-import { getDb } from '../_lib/db';
-import { isValidShareId } from '../_lib/id';
+import { sanitizeState, validatePutBody } from '../../shared/validateState.js';
+import { getShareAdminSecret } from '../_lib/env.js';
+import { getDb } from '../_lib/db.js';
+import { isValidShareId } from '../_lib/id.js';
 import {
   hashClientIp,
   isAllowedRequestOrigin,
   isJsonRequest,
   jsonResponse,
   parseJsonBody,
-} from '../_lib/http';
-import { consumePutRateLimit } from '../_lib/putRateLimit';
+} from '../_lib/http.js';
+import { consumePutRateLimit } from '../_lib/putRateLimit.js';
 import {
   isSharedPageReadable,
   loadSharedPage,
   revokeSharedPage,
   updateSharedPage,
-} from '../_lib/sharedPageWrite';
+} from '../_lib/sharedPageWrite.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const id = typeof req.query.id === 'string' ? req.query.id : '';

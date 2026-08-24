@@ -1,9 +1,9 @@
 import {
   SHARE_PUT_RATE_LIMIT_WINDOW_MS,
   SHARE_RATE_LIMIT_CLEANUP_MS,
-} from '../../shared/limits';
-import { getDb } from './db';
-import { getSharePutRateLimitMax } from './env';
+} from '../../shared/limits.js';
+import { getDb } from './db.js';
+import { getSharePutRateLimitMax } from './env.js';
 
 type PutRateLimitResult = { allowed: true; remaining: number } | { allowed: false; remaining: 0 };
 

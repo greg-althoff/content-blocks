@@ -1,16 +1,16 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { validateShareState } from '../../shared/validateState';
-import { getDb } from '../_lib/db';
-import { generateShareId } from '../_lib/id';
+import { validateShareState } from '../../shared/validateState.js';
+import { getDb } from '../_lib/db.js';
+import { generateShareId } from '../_lib/id.js';
 import {
   hashClientIp,
   isAllowedRequestOrigin,
   isJsonRequest,
   jsonResponse,
   parseJsonBody,
-} from '../_lib/http';
-import { consumeShareRateLimit } from '../_lib/rateLimit';
-import { createSharedPage } from '../_lib/sharedPageWrite';
+} from '../_lib/http.js';
+import { consumeShareRateLimit } from '../_lib/rateLimit.js';
+import { createSharedPage } from '../_lib/sharedPageWrite.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {

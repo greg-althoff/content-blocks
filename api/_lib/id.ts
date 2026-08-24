@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import { SHARE_ID_LENGTH, SHARE_ID_PATTERN } from '../../shared/limits';
+import { SHARE_ID_LENGTH, SHARE_ID_PATTERN } from '../../shared/limits.js';
 
 const ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 export { SHARE_ID_PATTERN };

@@ -1,9 +1,9 @@
 import {
   SHARE_RATE_LIMIT_CLEANUP_MS,
   SHARE_RATE_LIMIT_WINDOW_MS,
-} from '../../shared/limits';
-import { getDb } from './db';
-import { getShareRateLimitMax } from './env';
+} from '../../shared/limits.js';
+import { getDb } from './db.js';
+import { getShareRateLimitMax } from './env.js';
 
 type RateLimitResult = { allowed: true; remaining: number } | { allowed: false; remaining: 0 };
 

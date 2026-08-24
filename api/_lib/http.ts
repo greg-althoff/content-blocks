@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import type { VercelRequest } from '@vercel/node';
-import { getAllowedOrigins, getShareIpHashSalt } from './env';
+import { getAllowedOrigins, getShareIpHashSalt } from './env.js';
 
 export function jsonResponse(res: import('@vercel/node').VercelResponse, status: number, body: unknown) {
   res.setHeader('Content-Type', 'application/json');

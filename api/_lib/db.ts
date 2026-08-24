@@ -1,7 +1,7 @@
 import { createClient } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
-import { getTursoCredentials } from './env';
-import * as schema from './schema';
+import { getTursoCredentials } from './env.js';
+import * as schema from './schema.js';
 
 let client: ReturnType<typeof createClient> | null = null;
 let db: ReturnType<typeof drizzle<typeof schema>> | null = null;

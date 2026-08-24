@@ -1,7 +1,7 @@
 import { and, eq, gt, isNull, or, sql } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
-import * as schema from './schema';
-import { sharedPages } from './schema';
+import * as schema from './schema.js';
+import { sharedPages } from './schema.js';
 
 export type SharedPageDb = LibSQLDatabase<typeof schema>;
 
