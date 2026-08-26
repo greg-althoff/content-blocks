@@ -43,7 +43,7 @@ function CtaChip({
     <div className="group/cta relative shrink-0">
       <div
         className={cn(
-          'flex min-h-[34px] items-center rounded-md border border-[#3B82F6] px-3 text-[13px] font-medium text-[#3B82F6]',
+          'cta-pill flex min-h-[34px] items-center rounded-md border border-[#3B82F6] px-3 text-[13px] font-medium text-[#3B82F6]',
           fillClass,
         )}
       >
@@ -109,7 +109,7 @@ export function BlockCard({
           onSelect();
         }}
         className={cn(
-          'block-row relative flex items-center gap-3 rounded-lg px-3 pr-8 select-none',
+          'block-row relative flex flex-wrap items-center gap-3 rounded-lg px-3 pr-8 select-none',
           shouldEnter && 'block-enter',
           isFocus ? 'min-h-[92px] bg-white py-4' : 'min-h-[66px] bg-block py-3',
           isFocus && 'border-[1.5px] border-accent',
