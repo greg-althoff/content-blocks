@@ -269,17 +269,19 @@ export function Sidebar({
           type="button"
           onClick={() => setManualCollapsed(true)}
           aria-label="Collapse sidebar"
-          className="group/logo relative flex w-full justify-center px-5 pb-8 pt-6"
+          className="group/logo flex w-full justify-center px-5 pb-8 pt-6"
         >
-          <img src="/CBlocks-Logo.png" alt="ContentBlocks" width={160} className="h-auto w-[160px]" />
-          {!isPhone && (
-            <img
-              src="/icons/sidebar-icon.svg"
-              alt=""
-              aria-hidden="true"
-              className="absolute left-1/2 top-1/2 ml-[92px] h-4 w-4 -translate-y-1/2 opacity-0 transition-opacity duration-150 group-hover/logo:opacity-100"
-            />
-          )}
+          <span className="relative inline-flex">
+            <img src="/CBlocks-Logo.png" alt="ContentBlocks" width={160} className="h-auto w-[160px]" />
+            {!isPhone && (
+              <img
+                src="/icons/sidebar-icon.svg"
+                alt=""
+                aria-hidden="true"
+                className="absolute left-full top-1/2 ml-3 h-4 w-4 -translate-y-1/2 opacity-0 transition-opacity duration-150 group-hover/logo:opacity-100"
+              />
+            )}
+          </span>
         </button>
       )}
 
