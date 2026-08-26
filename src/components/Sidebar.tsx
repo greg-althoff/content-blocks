@@ -263,7 +263,7 @@ export function Sidebar({
           aria-label="Expand sidebar"
           className="flex justify-center px-3 pb-6 pt-6"
         >
-          <img src="/icons/condensed-logo.svg" alt="ContentBlocks" className="h-auto w-10" />
+          <img src="/icons/condensed-logo.svg" alt="ContentBlocks" className="h-auto w-[43px]" />
         </button>
       ) : (
         <button
