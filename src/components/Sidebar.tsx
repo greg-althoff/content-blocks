@@ -296,7 +296,7 @@ export function Sidebar({
       <nav
         className={cn(
           'flex flex-1 flex-col px-4',
-          collapsed ? 'items-center gap-1.5' : 'gap-2',
+          collapsed ? 'items-center gap-2.5' : 'gap-2',
         )}
       >
         {collapsed ? (
@@ -381,7 +381,7 @@ export function Sidebar({
       <div
         className={cn(
           'mt-auto flex flex-col px-4',
-          collapsed ? 'items-center gap-1.5 pb-2' : 'gap-2 pb-[42px]',
+          collapsed ? 'items-center gap-2.5 pb-2' : 'gap-2 pb-[42px]',
         )}
       >
         {collapsed ? (

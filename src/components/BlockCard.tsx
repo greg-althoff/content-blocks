@@ -141,7 +141,12 @@ export function BlockCard({
           />
         </div>
 
-        <div className="cta-group flex shrink-0 items-center justify-end gap-2">
+        <div
+          className={cn(
+            'cta-group flex shrink-0 items-center justify-end gap-2',
+            item.ctas.length === 1 && 'cta-group-single',
+          )}
+        >
           {item.ctas.map((cta, index) => (
             <CtaChip
               key={`${item.id}-cta-${index}`}

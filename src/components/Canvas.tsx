@@ -61,7 +61,7 @@ function StickyPageHeader({ children }: { children: ReactNode }) {
       <div ref={sentinelRef} className="h-px w-full" aria-hidden />
       <div
         className={cn(
-          'sticky top-0 z-30 -mx-10 bg-canvas px-10 pt-[30px] pb-4 transition-shadow duration-200 sm:-mx-14 sm:px-14 lg:-mx-16 lg:px-16',
+          'sticky top-0 z-30 -mx-5 bg-canvas px-5 pt-[30px] pb-4 transition-shadow duration-200 sm:-mx-14 sm:px-14 lg:-mx-16 lg:px-16',
           stuck && 'shadow-[0_2px_8px_rgba(15,23,42,0.08)]',
         )}
       >
@@ -240,7 +240,7 @@ export function Canvas({
     <div
       ref={canvasRef}
       onClick={() => onSelect(null)}
-      className="min-h-full bg-canvas px-10 pb-10 sm:px-14 lg:px-16"
+      className="min-h-full bg-canvas px-5 pb-10 sm:px-14 lg:px-16"
     >
       <StickyPageHeader>
         <HeaderBar meta={state.meta} onChange={onMetaChange} />
