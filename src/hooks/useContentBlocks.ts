@@ -36,9 +36,10 @@ const HASH_FALLBACK_TOAST =
 
 export function useContentBlocks() {
   const [startBlank] = useState(isNewPageRequest);
-  const [liveShareId, setLiveShareId] = useState<string | null>(() =>
-    typeof window === 'undefined' ? null : parseSharePath(),
-  );
+  const [liveShareId, setLiveShareId] = useState<string | null>(() => {
+    if (typeof window === 'undefined' || startBlank) return null;
+    return parseSharePath();
+  });
   const [hashOnLoad] = useState(() =>
     startBlank || liveShareId || typeof window === 'undefined' ? '' : window.location.hash.slice(1),
   );

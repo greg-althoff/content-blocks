@@ -98,8 +98,9 @@ export function isNewPageRequest(): boolean {
   return new URLSearchParams(window.location.search).get(NEW_PAGE_PARAM) === '1';
 }
 
+/** Always open a blank app at the root. Never reuse `/p/:id` or other pathnames. */
 export function newPageUrl(): string {
-  return `${window.location.origin}${window.location.pathname}?${NEW_PAGE_PARAM}=1`;
+  return `${window.location.origin}/?${NEW_PAGE_PARAM}=1`;
 }
 
 export function stripNewPageParam(): void {
@@ -107,5 +108,5 @@ export function stripNewPageParam(): void {
   if (params.get(NEW_PAGE_PARAM) !== '1') return;
   params.delete(NEW_PAGE_PARAM);
   const search = params.toString();
-  history.replaceState(null, '', window.location.pathname + (search ? `?${search}` : ''));
+  history.replaceState(null, '', `/${search ? `?${search}` : ''}`);
 }
