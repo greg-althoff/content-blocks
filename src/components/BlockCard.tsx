@@ -49,6 +49,7 @@ function CtaChip({
           onChange={onChange}
           placeholder="CTA"
           fullWidth={false}
+          displayMaxLength={20}
           className="whitespace-nowrap font-block text-[13px] font-medium tracking-[0.02em] text-[#3B82F6]"
         />
       </div>
@@ -99,7 +100,7 @@ export function BlockCard({
           onSelect();
         }}
         className={cn(
-          'relative flex items-center gap-3 rounded-lg px-3 pr-8 select-none',
+          'block-row relative flex items-center gap-3 rounded-lg px-3 pr-8 select-none',
           shouldEnter && 'block-enter',
           isFocus ? 'min-h-[92px] bg-white py-4' : 'min-h-[66px] bg-block py-3',
           isFocus && 'border-[1.5px] border-accent',
@@ -131,7 +132,7 @@ export function BlockCard({
           />
         </div>
 
-        <div className="flex shrink-0 items-center justify-end gap-2">
+        <div className="cta-group flex shrink-0 items-center justify-end gap-2">
           {item.ctas.map((cta, index) => (
             <CtaChip
               key={`${item.id}-cta-${index}`}

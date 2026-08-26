@@ -11,6 +11,14 @@ interface InlineEditProps {
   align?: 'left' | 'center' | 'right';
   fullWidth?: boolean;
   maxLength?: number;
+  /** Truncate the collapsed (non-editing) display text to this many characters, with an
+   * ellipsis if longer. The full value is still shown—and editable—once clicked into. */
+  displayMaxLength?: number;
+}
+
+function truncateForDisplay(value: string, displayMaxLength?: number): string {
+  if (displayMaxLength == null || value.length <= displayMaxLength) return value;
+  return `${value.slice(0, displayMaxLength)}…`;
 }
 
 export function InlineEdit({
@@ -22,6 +30,7 @@ export function InlineEdit({
   align = 'left',
   fullWidth = true,
   maxLength,
+  displayMaxLength,
 }: InlineEditProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -130,7 +139,7 @@ export function InlineEdit({
         className,
       )}
     >
-      {value ? value : placeholder}
+      {value ? truncateForDisplay(value, displayMaxLength) : placeholder}
     </button>
   );
 }

@@ -133,3 +133,14 @@ body {
 .rich-label em {
   font-style: italic;
 }
+
+.block-row {
+  container-type: inline-size;
+}
+
+@container (max-width: 640px) {
+  .cta-group {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+}
