@@ -23,6 +23,7 @@ export default {
       },
       width: {
         sidebar: '240px',
+        'sidebar-condensed': '98px',
       },
     },
   },
