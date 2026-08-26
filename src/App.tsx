@@ -221,7 +221,7 @@ export default function App() {
 
   if (!ready || loadingSharedPage) {
     return (
-      <div className="flex h-screen">
+      <div className="flex h-dvh">
         <div className="w-sidebar bg-sidebar" />
         <div className="flex-1 bg-canvas" />
       </div>
@@ -230,7 +230,7 @@ export default function App() {
 
   if (sharedPageLoadError) {
     return (
-      <div className="flex h-screen">
+      <div className="flex h-dvh">
         <div className="w-sidebar bg-sidebar" />
         <div className="flex flex-1 items-center justify-center bg-canvas px-6">
           <div className="max-w-md text-center">
@@ -253,7 +253,7 @@ export default function App() {
 
   if (hashLoadError) {
     return (
-      <div className="flex h-screen">
+      <div className="flex h-dvh">
         <div className="w-sidebar bg-sidebar" />
         <div className="flex flex-1 items-center justify-center bg-canvas px-6">
           <div className="max-w-md text-center">
@@ -292,7 +292,7 @@ export default function App() {
         }, 40);
       }}
     >
-      <div className="flex h-screen overflow-hidden bg-canvas">
+      <div className="flex h-dvh overflow-hidden bg-canvas">
         <Sidebar
           onAddFocus={unlessDrag(addFocusPoint)}
           onAddContent={unlessDrag(addContentBlock)}

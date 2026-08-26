@@ -1,8 +1,9 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { ExportIcon, PlusIcon, ShareIcon } from './Icons';
 import { cn } from '../lib/cn';
 import { SidebarToolId, type SidebarTool } from '../lib/dnd';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 const TOOL_ICONS = {
   focus: '/icons/Icon_ Focus Point.png?v=4',
@@ -22,21 +23,6 @@ const CONDENSED_TOOL_ICONS = {
 } as const;
 
 const PHONE_MEDIA_QUERY = '(max-width: 639px)';
-
-function useIsPhone(): boolean {
-  const [isPhone, setIsPhone] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia(PHONE_MEDIA_QUERY).matches : false,
-  );
-
-  useEffect(() => {
-    const mql = window.matchMedia(PHONE_MEDIA_QUERY);
-    const onChange = () => setIsPhone(mql.matches);
-    mql.addEventListener('change', onChange);
-    return () => mql.removeEventListener('change', onChange);
-  }, []);
-
-  return isPhone;
-}
 
 interface SidebarProps {
   onAddFocus: () => void;
@@ -97,7 +83,7 @@ function DraggableToolButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-[45px] w-full cursor-grab items-center justify-start gap-3 rounded-lg border border-white/20 bg-transparent py-0 pr-3.5 text-left text-[13px] leading-none tracking-[0.02em] text-white transition-colors hover:border-transparent hover:bg-sidebar-button active:cursor-grabbing lg:text-[14px]',
+        'flex h-[45px] w-full touch-none cursor-grab items-center justify-start gap-3 rounded-lg border border-white/20 bg-transparent py-0 pr-3.5 text-left text-[13px] leading-none tracking-[0.02em] text-white transition-colors hover:border-transparent hover:bg-sidebar-button active:cursor-grabbing lg:text-[14px]',
         paddingLeftClass,
         isDragging && 'opacity-40',
       )}
@@ -135,7 +121,7 @@ function CondensedToolButton({
       aria-label={label}
       title={label}
       className={cn(
-        'flex h-[40px] w-[43px] shrink-0 cursor-grab items-center justify-center rounded-lg border border-white/20 bg-transparent transition-colors hover:border-transparent hover:bg-sidebar-button active:cursor-grabbing',
+        'flex h-[40px] w-[43px] shrink-0 touch-none cursor-grab items-center justify-center rounded-lg border border-white/20 bg-transparent transition-colors hover:border-transparent hover:bg-sidebar-button active:cursor-grabbing',
         isDragging && 'opacity-40',
       )}
       {...listeners}
@@ -246,7 +232,7 @@ export function Sidebar({
   onExport,
 }: SidebarProps) {
   const [manualCollapsed, setManualCollapsed] = useState(false);
-  const isPhone = useIsPhone();
+  const isPhone = useMediaQuery(PHONE_MEDIA_QUERY);
   const collapsed = manualCollapsed || isPhone;
 
   return (
@@ -261,7 +247,7 @@ export function Sidebar({
           type="button"
           onClick={() => setManualCollapsed(false)}
           aria-label="Expand sidebar"
-          className="flex justify-center px-3 pb-6 pt-6"
+          className="flex justify-center px-3 pb-3 pt-4"
         >
           <img src="/icons/condensed-logo.svg" alt="ContentBlocks" className="h-auto w-8" />
         </button>
@@ -300,7 +286,7 @@ export function Sidebar({
       </div>
 
       <div
-        className="my-4 h-px w-full"
+        className={cn('h-px w-full', collapsed ? 'my-2' : 'my-4')}
         style={{
           backgroundImage:
             'repeating-linear-gradient(to right, rgba(255,255,255,0.28) 0 2px, transparent 2px 5px)',
@@ -309,8 +295,8 @@ export function Sidebar({
 
       <nav
         className={cn(
-          'flex flex-1 flex-col gap-2 px-4',
-          collapsed && 'items-center',
+          'flex flex-1 flex-col px-4',
+          collapsed ? 'items-center gap-1.5' : 'gap-2',
         )}
       >
         {collapsed ? (
@@ -394,8 +380,8 @@ export function Sidebar({
 
       <div
         className={cn(
-          'mt-auto flex flex-col gap-2 px-4',
-          collapsed ? 'items-center pb-4' : 'pb-[42px]',
+          'mt-auto flex flex-col px-4',
+          collapsed ? 'items-center gap-1.5 pb-2' : 'gap-2 pb-[42px]',
         )}
       >
         {collapsed ? (
@@ -440,7 +426,7 @@ export function Sidebar({
       </div>
 
       {collapsed ? (
-        <div className="flex justify-center px-3 pb-5 pt-2">
+        <div className="flex justify-center px-3 pb-3 pt-1">
           <a
             href="https://www.creativeisles.com"
             target="_blank"

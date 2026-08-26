@@ -28,7 +28,7 @@ export function MarkerRow({
         onSelect();
       }}
       className={cn(
-        'relative -my-1.5 flex items-center rounded-md py-1.5 cursor-grab active:cursor-grabbing',
+        'relative -my-1.5 flex touch-none items-center rounded-md py-1.5 cursor-grab active:cursor-grabbing',
         !isOverlay && 'block-enter',
         selected && !exporting && 'ring-2 ring-accent/40 ring-offset-2 ring-offset-canvas',
       )}

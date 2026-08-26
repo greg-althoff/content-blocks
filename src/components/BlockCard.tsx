@@ -2,9 +2,12 @@ import { useEffect, useRef } from 'react';
 import type { HandleProps } from './Canvas';
 import type { BlockItem } from '../types';
 import { cn } from '../lib/cn';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { DragHandle } from './Icons';
 import { InlineEdit } from './InlineEdit';
 import { RichLabel } from './RichLabel';
+
+const COMPACT_VIEWPORT_QUERY = '(max-width: 1023px)';
 
 interface BlockCardProps {
   item: BlockItem;
@@ -87,10 +90,16 @@ export function BlockCard({
   const isFocus = item.type === 'focus';
   const hasEntered = useRef(false);
   const shouldEnter = !isOverlay && !hasEntered.current;
+  const isCompactViewport = useMediaQuery(COMPACT_VIEWPORT_QUERY);
 
   useEffect(() => {
     hasEntered.current = true;
   }, []);
+
+  const requestRemove = () => {
+    if (isCompactViewport && !window.confirm('Delete this block?')) return;
+    onRemove();
+  };
 
   return (
     <div className="group/block relative">
@@ -116,7 +125,7 @@ export function BlockCard({
         <button
           type="button"
           aria-label="Drag to reorder"
-          className="flex h-8 w-6 shrink-0 cursor-grab items-center justify-center text-slate-400 hover:text-slate-500 active:cursor-grabbing"
+          className="flex h-10 w-8 shrink-0 touch-none cursor-grab items-center justify-center text-slate-400 hover:text-slate-500 active:cursor-grabbing"
           {...handleProps.attributes}
           {...handleProps.listeners}
         >
@@ -171,7 +180,7 @@ export function BlockCard({
           onPointerDown={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            onRemove();
+            requestRemove();
           }}
           onClick={(event) => {
             event.preventDefault();
