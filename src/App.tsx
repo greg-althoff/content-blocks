@@ -192,6 +192,11 @@ export default function App() {
   }, [setExporting, setSelectedId, showToast, state.meta.page, state.meta.version]);
 
   useEffect(() => {
+    const page = state.meta.page.trim();
+    document.title = page ? `${page} · Content Blocks` : 'Content Blocks';
+  }, [state.meta.page]);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (

@@ -100,6 +100,15 @@ export function RichLabel({ value, onChange, placeholder = 'Untitled', className
         )}
         onClick={(event) => event.stopPropagation()}
         onPointerDown={(event) => event.stopPropagation()}
+        onFocus={(event) => {
+          const el = event.currentTarget;
+          const selection = window.getSelection();
+          if (!selection) return;
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }}
         onInput={emit}
         onBeforeInput={(event) => {
           const native = event.nativeEvent as InputEvent;

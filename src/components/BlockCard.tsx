@@ -122,12 +122,12 @@ export function BlockCard({
           <DragHandle className="h-4 w-2.5" />
         </button>
 
-        <div className="min-w-0 flex-1 overflow-hidden pr-3 select-text">
+        <div className="min-w-0 flex-1 py-1 select-text">
           <RichLabel
             value={item.label}
             onChange={onLabelChange}
             placeholder={isFocus ? 'Focus Point' : 'Content Block'}
-            className="truncate font-block text-[15px] tracking-[0.02em] text-gray-700"
+            className="whitespace-pre-wrap break-words font-block text-[15px] tracking-[0.02em] text-gray-700"
           />
         </div>
 
