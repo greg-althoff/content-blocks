@@ -7,6 +7,8 @@ import {
   encodeState,
   getFallbackState,
   isNewPageRequest,
+  loadLocalSnapshot,
+  looksLikePageStateHash,
   newPageUrl,
   saveLocalState,
   stripNewPageParam,
@@ -20,13 +22,17 @@ import {
   toAbsoluteShareUrl,
   type SaveStatus,
 } from '../lib/shareApi';
+import {
+  hasShareableContent,
+  replaceLocationWithLiveShare,
+  shouldAutoPromoteToLiveShare,
+} from '../lib/liveShareUrl';
 import { SharedPageSession } from '../lib/sharedPageSession';
 import {
   INITIAL_SHARED_PAGE_SAVE_UI,
   reduceSharedPageSaveUi,
   type SharedPageSaveUiState,
 } from '../lib/sharedPageSaveUi';
-import { isPristineEmpty } from '../lib/richText';
 import type { AppState, BlockItem, CanvasItem, Meta } from '../types';
 import { isBlock } from '../types';
 
@@ -38,7 +44,14 @@ export function useContentBlocks() {
   const [startBlank] = useState(isNewPageRequest);
   const [liveShareId, setLiveShareId] = useState<string | null>(() => {
     if (typeof window === 'undefined' || startBlank) return null;
-    return parseSharePath();
+    const fromPath = parseSharePath();
+    if (fromPath) return fromPath;
+    const resumed = loadLocalSnapshot()?.liveShareId ?? null;
+    if (resumed) {
+      replaceLocationWithLiveShare(resumed);
+      return resumed;
+    }
+    return null;
   });
   const [hashOnLoad] = useState(() =>
     startBlank || liveShareId || typeof window === 'undefined' ? '' : window.location.hash.slice(1),
@@ -51,6 +64,7 @@ export function useContentBlocks() {
   const [loadingSharedPage, setLoadingSharedPage] = useState(Boolean(liveShareId));
   const [sharedPageHydrated, setSharedPageHydrated] = useState(false);
   const [sharedPageLoadError, setSharedPageLoadError] = useState(false);
+  const [hashLoadError, setHashLoadError] = useState(false);
   const [serverVersion, setServerVersion] = useState(1);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [sharedPageSaveUi, setSharedPageSaveUi] = useState<SharedPageSaveUiState>(
@@ -59,14 +73,15 @@ export function useContentBlocks() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
-  const persistGen = useRef(0);
-  const persistTimer = useRef<number | undefined>(undefined);
   const toastTimer = useRef<number | undefined>(undefined);
+  const promotePromiseRef = useRef<Promise<string | null> | null>(null);
+  const promoteRetryAtRef = useRef(0);
   const serverVersionRef = useRef(1);
   const saveManagerRef = useRef<LiveShareSaveManager | null>(null);
   const liveShareIdRef = useRef<string | null>(liveShareId);
   const sharedPageSessionRef = useRef(new SharedPageSession());
   const skipInitialFetchRef = useRef(false);
+  const createdShareStateRef = useRef<AppState | null>(null);
   const stateRef = useRef(state);
 
   const showToast = useCallback((message: string) => {
@@ -141,9 +156,15 @@ export function useContentBlocks() {
 
     if (skipInitialFetchRef.current) {
       skipInitialFetchRef.current = false;
+      const posted = createdShareStateRef.current ?? stateRef.current;
+      createdShareStateRef.current = null;
       sharedPageSessionRef.current.completeHydration();
-      saveManagerRef.current?.markLoaded(stateRef.current);
+      saveManagerRef.current?.markLoaded(posted);
       saveManagerRef.current?.setEnabled(true);
+      if (JSON.stringify(stateRef.current) !== JSON.stringify(posted)) {
+        sharedPageSessionRef.current.recordUserEdit();
+        saveManagerRef.current?.scheduleSave(stateRef.current);
+      }
       setSharedPageHydrated(true);
       setLoadingSharedPage(false);
       setSharedPageLoadError(false);
@@ -192,17 +213,61 @@ export function useContentBlocks() {
     };
   }, [liveShareId, showToast]);
 
+  const promoteToLiveShare = useCallback(async (nextState: AppState): Promise<string | null> => {
+    if (liveShareIdRef.current) return liveShareIdRef.current;
+    if (!hasShareableContent(nextState)) return null;
+    if (!promotePromiseRef.current) {
+      promotePromiseRef.current = (async () => {
+        try {
+          const snapshot = stateRef.current;
+          if (!hasShareableContent(snapshot)) {
+            promotePromiseRef.current = null;
+            return null;
+          }
+          const created = await createShare(snapshot);
+          if (liveShareIdRef.current) return liveShareIdRef.current;
+          skipInitialFetchRef.current = true;
+          createdShareStateRef.current = snapshot;
+          replaceLocationWithLiveShare(created.id);
+          serverVersionRef.current = created.version;
+          setServerVersion(created.version);
+          setLiveShareId(created.id);
+          liveShareIdRef.current = created.id;
+          saveLocalState(snapshot, created.id);
+          return created.id;
+        } catch {
+          promotePromiseRef.current = null;
+          promoteRetryAtRef.current = Date.now() + 8000;
+          return null;
+        }
+      })();
+    }
+    return promotePromiseRef.current;
+  }, []);
+
+  useEffect(() => {
+    if (!shouldAutoPromoteToLiveShare(ready, liveShareId, state, hashLoadError)) return;
+    if (Date.now() < promoteRetryAtRef.current) return;
+    void promoteToLiveShare(state);
+  }, [ready, liveShareId, state, hashLoadError, promoteToLiveShare]);
+
   useEffect(() => {
     if (!hashOnLoad || liveShareId) return;
     let cancelled = false;
     decodeState(hashOnLoad)
       .then((decoded) => {
         if (cancelled) return;
-        if (decoded) setState(decoded);
+        if (decoded) {
+          setState(decoded);
+        } else if (looksLikePageStateHash(hashOnLoad)) {
+          setHashLoadError(true);
+        }
         setReady(true);
       })
       .catch(() => {
-        if (!cancelled) setReady(true);
+        if (cancelled) return;
+        if (looksLikePageStateHash(hashOnLoad)) setHashLoadError(true);
+        setReady(true);
       });
     return () => {
       cancelled = true;
@@ -210,35 +275,43 @@ export function useContentBlocks() {
   }, [hashOnLoad, liveShareId]);
 
   useEffect(() => {
-    if (!ready || liveShareId) return;
-    if (isPristineEmpty(state) && !window.location.hash.slice(1)) {
-      return;
-    }
-    saveLocalState(state);
-    window.clearTimeout(persistTimer.current);
-    persistTimer.current = window.setTimeout(() => {
-      const gen = ++persistGen.current;
-      void encodeState(state).then((encoded) => {
-        if (gen !== persistGen.current) return;
-        const next = `#${encoded}`;
-        if (window.location.hash !== next) {
-          history.replaceState(null, '', next);
-        }
-      });
-    }, 120);
-  }, [state, ready, liveShareId]);
+    if (!ready || hashLoadError) return;
+    if (!hasShareableContent(state)) return;
+    saveLocalState(state, liveShareId);
+  }, [state, ready, liveShareId, hashLoadError]);
 
   useEffect(() => {
     if (!ready || !liveShareId || !sharedPageHydrated || sharedPageLoadError) return;
     if (saveStatus === 'conflict') return;
     if (!sharedPageSessionRef.current.canAutosave()) return;
+    if (!hasShareableContent(state)) return;
     saveManagerRef.current?.scheduleSave(state);
   }, [state, ready, liveShareId, sharedPageHydrated, sharedPageLoadError, saveStatus]);
 
   useEffect(() => {
+    const flush = () => {
+      const current = stateRef.current;
+      if (hasShareableContent(current)) {
+        saveLocalState(current, liveShareIdRef.current);
+      }
+      if (!liveShareIdRef.current || !sharedPageSessionRef.current.canAutosave()) return;
+      if (!hasShareableContent(current)) return;
+      void saveManagerRef.current?.flushSave(current, { keepalive: true });
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
     return () => {
       window.clearTimeout(toastTimer.current);
-      window.clearTimeout(persistTimer.current);
       saveManagerRef.current?.destroy();
     };
   }, []);
@@ -428,21 +501,17 @@ export function useContentBlocks() {
     };
 
     try {
-      const created = await createShare(stateRef.current);
-      skipInitialFetchRef.current = true;
-      history.replaceState(null, '', created.url);
-      serverVersionRef.current = created.version;
-      setServerVersion(created.version);
-      setLiveShareId(created.id);
-      liveShareIdRef.current = created.id;
-
-      const copied = await copyTextFromAsync(async () => created.absoluteUrl);
-      if (copied) {
-        showToast('Copied!');
+      const id = await promoteToLiveShare(stateRef.current);
+      if (id) {
+        const absoluteUrl = toAbsoluteShareUrl(`/p/${id}`);
+        const copied = await copyTextFromAsync(async () => absoluteUrl);
+        if (copied) {
+          showToast('Copied!');
+          return;
+        }
+        window.prompt('Copy this share link:', absoluteUrl);
         return;
       }
-      window.prompt('Copy this share link:', created.absoluteUrl);
-      return;
     } catch {
       // Fall back to hash-link sharing below.
     }
@@ -464,7 +533,7 @@ export function useContentBlocks() {
     } catch {
       showToast('Could not copy link');
     }
-  }, [showToast]);
+  }, [promoteToLiveShare, showToast]);
 
   return {
     ready,
@@ -474,6 +543,7 @@ export function useContentBlocks() {
     liveShareId,
     loadingSharedPage,
     sharedPageLoadError,
+    hashLoadError,
     saveStatus,
     sharedPageSaveUi,
     retrySharedPageSave,

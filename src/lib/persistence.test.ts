@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { isNewPageRequest, newPageUrl, stripNewPageParam } from './persistence';
+import {
+  isNewPageRequest,
+  loadLocalSnapshot,
+  looksLikePageStateHash,
+  newPageUrl,
+  saveLocalState,
+  stripNewPageParam,
+} from './persistence';
 
 function mockWindowLocation(href: string) {
   const url = new URL(href);
@@ -60,5 +67,58 @@ describe('new page navigation', () => {
     expect(history.replaceState).toHaveBeenCalledWith(null, '', '/');
     expect(location.pathname).toBe('/');
     expect(location.search).toBe('');
+  });
+});
+
+describe('saved page persistence', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('recognizes truncated or encoded page hashes', () => {
+    expect(looksLikePageStateHash('cb1.H4sIAAAA')).toBe(true);
+    expect(looksLikePageStateHash('#cb1.abc')).toBe(true);
+    expect(looksLikePageStateHash('short')).toBe(false);
+  });
+
+  it('stores the live share id beside local state so / resumes the same URL', () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+      removeItem: (key: string) => {
+        store.delete(key);
+      },
+    });
+
+    saveLocalState(
+      {
+        meta: {
+          page: 'Home',
+          client: 'Client',
+          version: '1.0',
+          preparedBy: 'Studio',
+          contact: 'a@b.c',
+        },
+        items: [{ id: 'block-1', type: 'content', label: 'Hello', ctas: [] }],
+      },
+      '5Q25jl1374',
+    );
+
+    expect(loadLocalSnapshot()).toEqual({
+      liveShareId: '5Q25jl1374',
+      state: {
+        meta: {
+          page: 'Home',
+          client: 'Client',
+          version: '1.0',
+          preparedBy: 'Studio',
+          contact: 'a@b.c',
+        },
+        items: [{ id: 'block-1', type: 'content', label: 'Hello', ctas: [] }],
+      },
+    });
   });
 });

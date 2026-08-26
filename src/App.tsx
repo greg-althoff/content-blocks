@@ -74,6 +74,7 @@ export default function App() {
     liveShareId,
     loadingSharedPage,
     sharedPageLoadError,
+    hashLoadError,
     sharedPageSaveUi,
     retrySharedPageSave,
     reloadSharedPage,
@@ -238,6 +239,31 @@ export default function App() {
               className="mt-4 rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 hover:bg-slate-50"
             >
               Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (hashLoadError) {
+    return (
+      <div className="flex h-screen">
+        <div className="w-sidebar bg-sidebar" />
+        <div className="flex flex-1 items-center justify-center bg-canvas px-6">
+          <div className="max-w-md text-center">
+            <h1 className="text-lg font-semibold text-slate-900">Could not open this saved link</h1>
+            <p className="mt-2 text-sm text-slate-600">
+              This URL could not be read. It may have been cut off when it was copied or saved.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                window.location.assign('/');
+              }}
+              className="mt-4 rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 hover:bg-slate-50"
+            >
+              Start a new page
             </button>
           </div>
         </div>

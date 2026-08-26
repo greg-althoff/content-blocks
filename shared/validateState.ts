@@ -9,7 +9,7 @@ import {
   MAX_META_FIELD_LENGTH,
   MAX_PAYLOAD_BYTES,
 } from './limits.js';
-import { labelPlainText, labelTagDepth, sanitizeLabelHtml } from './sanitizeLabel.js';
+import { labelTagDepth, sanitizeLabelHtml } from './sanitizeLabel.js';
 import type { AppState, CanvasItem } from './types.js';
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -214,7 +214,7 @@ export function validateShareState(rawBody: unknown, rawBodyBytes: number): Vali
     return { ok: false, error: 'Sanitized state too large', status: 413 };
   }
 
-  if (labelPlainText(sanitized.meta.page).length === 0 && sanitized.items.length === 0) {
+  if (sanitized.items.length === 0) {
     return { ok: false, error: 'Empty page cannot be shared', status: 400 };
   }
 

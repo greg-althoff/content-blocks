@@ -9,6 +9,7 @@ export type SaveFn = (
   id: string,
   state: AppState,
   version: number,
+  options?: { keepalive?: boolean },
 ) => Promise<{ version: number; updatedAt: number }>;
 
 type LiveShareSaveManagerOptions = {
@@ -37,6 +38,7 @@ export class LiveShareSaveManager {
   private retryAttempt = 0;
   private lastSavedJson = '';
   private destroyed = false;
+  private keepaliveNextFlush = false;
 
   constructor(options: LiveShareSaveManagerOptions) {
     this.shareId = options.shareId;
@@ -71,10 +73,11 @@ export class LiveShareSaveManager {
     }, 800);
   }
 
-  async flushSave(state: AppState): Promise<void> {
+  async flushSave(state: AppState, options?: { keepalive?: boolean }): Promise<void> {
     if (!this.enabled || this.destroyed || this.conflictMode) return;
     window.clearTimeout(this.debounceTimer);
     this.pendingState = state;
+    this.keepaliveNextFlush = Boolean(options?.keepalive);
     await this.flushPending();
   }
 
@@ -119,7 +122,9 @@ export class LiveShareSaveManager {
       this.onStatusChange('saving');
 
       try {
-        const result = await this.saveFn(this.shareId, state, this.getServerVersion());
+        const keepalive = this.keepaliveNextFlush;
+        this.keepaliveNextFlush = false;
+        const result = await this.saveFn(this.shareId, state, this.getServerVersion(), { keepalive });
         this.setServerVersion(result.version);
         this.lastSavedJson = JSON.stringify(state);
         this.retryAttempt = 0;
@@ -247,18 +252,24 @@ export async function fetchShare(id: string): Promise<SharedPagePayload> {
   return (await response.json()) as SharedPagePayload;
 }
 
+const KEEPALIVE_MAX_BYTES = 60_000;
+
 export async function updateShare(
   id: string,
   state: AppState,
   version: number,
+  options?: { keepalive?: boolean },
 ): Promise<{ version: number; updatedAt: number }> {
+  const body = JSON.stringify({ state, version });
+  const keepalive = Boolean(options?.keepalive) && body.length <= KEEPALIVE_MAX_BYTES;
   const response = await fetch(`/api/shares/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
     },
-    body: JSON.stringify({ state, version }),
+    body,
+    keepalive,
   });
 
   if (!response.ok) {

@@ -1,4 +1,5 @@
 import { sanitizeState } from '../../shared/validateState';
+import { SHARE_ID_PATTERN } from '../../shared/limits';
 import { createEmptyState } from '../defaultState';
 import type { AppState } from '../types';
 
@@ -63,19 +64,46 @@ export async function decodeState(hash: string): Promise<AppState | null> {
   }
 }
 
-export function loadLocalState(): AppState | null {
+export type LocalSnapshot = {
+  state: AppState;
+  liveShareId: string | null;
+};
+
+function isAppStateShape(value: unknown): value is { meta: unknown; items: unknown } {
+  return value !== null && typeof value === 'object' && 'meta' in value && 'items' in value;
+}
+
+export function loadLocalSnapshot(): LocalSnapshot | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    return sanitizeState(JSON.parse(raw));
+    const parsed: unknown = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && 'state' in parsed && !('meta' in parsed)) {
+      const envelope = parsed as { state: unknown; liveShareId?: unknown };
+      const state = sanitizeState(envelope.state);
+      if (!state) return null;
+      const liveShareId =
+        typeof envelope.liveShareId === 'string' && SHARE_ID_PATTERN.test(envelope.liveShareId)
+          ? envelope.liveShareId
+          : null;
+      return { state, liveShareId };
+    }
+    if (!isAppStateShape(parsed)) return null;
+    const state = sanitizeState(parsed);
+    if (!state) return null;
+    return { state, liveShareId: null };
   } catch {
     return null;
   }
 }
 
-export function saveLocalState(state: AppState): void {
+export function loadLocalState(): AppState | null {
+  return loadLocalSnapshot()?.state ?? null;
+}
+
+export function saveLocalState(state: AppState, liveShareId: string | null = null): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ state, liveShareId }));
   } catch {
     // Ignore quota / private-mode failures.
   }
@@ -109,4 +137,10 @@ export function stripNewPageParam(): void {
   params.delete(NEW_PAGE_PARAM);
   const search = params.toString();
   history.replaceState(null, '', `/${search ? `?${search}` : ''}`);
+}
+
+export function looksLikePageStateHash(hash: string): boolean {
+  const raw = hash.replace(/^#/, '');
+  if (!raw) return false;
+  return raw.startsWith(HASH_PREFIX) || raw.length > 40;
 }

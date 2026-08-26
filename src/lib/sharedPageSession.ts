@@ -68,8 +68,15 @@ export class SharedPageSession {
   }
 }
 
-export function shouldScheduleSharedPageAutosave(session: SharedPageSessionSnapshot): boolean {
-  return session.phase === 'hydrated' && session.editGeneration > session.hydrationBaseline;
+export function shouldScheduleSharedPageAutosave(
+  session: SharedPageSessionSnapshot,
+  state?: { items: unknown[] },
+): boolean {
+  if (session.phase !== 'hydrated' || session.editGeneration <= session.hydrationBaseline) {
+    return false;
+  }
+  if (state && state.items.length === 0) return false;
+  return true;
 }
 
 export function isLoadingSharedPagePhase(phase: SharedPageLoadPhase): boolean {

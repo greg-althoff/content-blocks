@@ -34,12 +34,21 @@ describe('SharedPageSession', () => {
     expect(shouldScheduleSharedPageAutosave(session.snapshot())).toBe(false);
   });
 
+  it('blocks autosave of an empty canvas even after a user edit', () => {
+    const session = new SharedPageSession();
+    session.beginLoad();
+    session.completeHydration();
+    session.recordUserEdit();
+    expect(shouldScheduleSharedPageAutosave(session.snapshot(), createEmptyState())).toBe(false);
+  });
+
   it('allows autosave only after a user edit post-hydration', () => {
     const session = new SharedPageSession();
     session.beginLoad();
     session.completeHydration();
     session.recordUserEdit();
     expect(session.canAutosave()).toBe(true);
+    expect(shouldScheduleSharedPageAutosave(session.snapshot(), REMOTE_STATE)).toBe(true);
   });
 
   it('never allows autosave after load failure', () => {
@@ -155,7 +164,7 @@ describe('live share hydration race', () => {
 
     await vi.advanceTimersByTimeAsync(800);
     expect(saveFn).toHaveBeenCalledTimes(1);
-    expect(saveFn).toHaveBeenCalledWith('abc1234567', edited, 1);
+    expect(saveFn).toHaveBeenCalledWith('abc1234567', edited, 1, { keepalive: false });
     manager.destroy();
   });
 });
