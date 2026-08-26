@@ -12,12 +12,13 @@ const TOOL_ICONS = {
   footer: '/icons/Icon_ the Footer.png?v=3',
 } as const;
 
+// Sized at 65% of their original (66x62 button / 32-40px icon) footprint.
 const CONDENSED_TOOL_ICONS = {
-  focus: { src: '/icons/condensed-focuspoint.svg', className: 'h-8 w-8' },
-  content: { src: '/icons/condensed-content-block.svg', className: 'h-auto w-9' },
-  cta: { src: '/icons/condensed-cta.svg', className: 'h-auto w-8' },
-  fold: { src: '/icons/condensed-fold.svg', className: 'h-auto w-10' },
-  footer: { src: '/icons/condensed-footer.svg', className: 'h-auto w-10' },
+  focus: { src: '/icons/condensed-focuspoint.svg', className: 'h-[21px] w-[21px]' },
+  content: { src: '/icons/condensed-content-block.svg', className: 'h-auto w-[23px]' },
+  cta: { src: '/icons/condensed-cta.svg', className: 'h-auto w-[21px]' },
+  fold: { src: '/icons/condensed-fold.svg', className: 'h-auto w-[26px]' },
+  footer: { src: '/icons/condensed-footer.svg', className: 'h-auto w-[26px]' },
 } as const;
 
 const PHONE_MEDIA_QUERY = '(max-width: 639px)';
@@ -134,7 +135,7 @@ function CondensedToolButton({
       aria-label={label}
       title={label}
       className={cn(
-        'flex h-[62px] w-[66px] shrink-0 cursor-grab items-center justify-center rounded-lg border border-white/20 bg-transparent transition-colors hover:border-transparent hover:bg-sidebar-button active:cursor-grabbing',
+        'flex h-[40px] w-[43px] shrink-0 cursor-grab items-center justify-center rounded-lg border border-white/20 bg-transparent transition-colors hover:border-transparent hover:bg-sidebar-button active:cursor-grabbing',
         isDragging && 'opacity-40',
       )}
       {...listeners}
@@ -148,7 +149,7 @@ function CondensedToolButton({
 function CondensedActionButton({
   icon,
   iconSrc,
-  iconClass = 'h-6 w-6',
+  iconClass = 'h-4 w-4',
   label,
   onClick,
   variant = 'default',
@@ -167,7 +168,7 @@ function CondensedActionButton({
       aria-label={label}
       title={label}
       className={cn(
-        'flex h-[62px] w-[66px] shrink-0 items-center justify-center rounded-lg border transition-colors',
+        'flex h-[40px] w-[43px] shrink-0 items-center justify-center rounded-lg border transition-colors',
         variant === 'default' && 'border-transparent bg-[#454A4F] text-white hover:bg-accent',
         variant === 'accent' && 'border-transparent bg-accent text-white hover:bg-accent-dark',
         variant === 'outline' &&
@@ -175,7 +176,7 @@ function CondensedActionButton({
       )}
     >
       {icon ? (
-        <span className="flex h-6 w-6 items-center justify-center [&_svg]:block">{icon}</span>
+        <span className="flex h-4 w-4 items-center justify-center [&_svg]:block">{icon}</span>
       ) : iconSrc ? (
         <img src={iconSrc} alt="" className={cn(iconClass, 'object-contain')} />
       ) : null}
@@ -289,7 +290,7 @@ export function Sidebar({
         {collapsed ? (
           <CondensedActionButton
             iconSrc="/icons/new-page-icon.svg"
-            iconClass="h-4 w-4"
+            iconClass="h-[10px] w-[10px]"
             label="New Page"
             onClick={onNew}
           />
@@ -400,13 +401,13 @@ export function Sidebar({
         {collapsed ? (
           <>
             <CondensedActionButton
-              icon={<ShareIcon className="h-6 w-6" />}
+              icon={<ShareIcon className="h-4 w-4" />}
               label="Share"
               onClick={onShare}
               variant="accent"
             />
             <CondensedActionButton
-              icon={<ExportIcon className="h-6 w-6" />}
+              icon={<ExportIcon className="h-4 w-4" />}
               label="Export"
               onClick={onExport}
               variant="outline"
