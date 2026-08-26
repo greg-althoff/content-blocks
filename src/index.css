@@ -141,34 +141,18 @@ body {
 @container (max-width: 640px) {
   .cta-group {
     flex-direction: column;
-    align-items: flex-end;
-  }
-
-  .cta-pill {
-    max-width: 150px;
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-
-  .cta-pill button {
-    white-space: normal;
-    overflow-wrap: anywhere;
-    font-size: 12px;
-  }
-
-  .cta-group-single {
+    align-items: center;
     width: 100%;
     flex-basis: 100%;
-    justify-content: center;
     margin-top: 8px;
   }
 
-  .cta-group-single .group\/cta {
+  .cta-group .group\/cta {
     width: 80%;
     max-width: 280px;
   }
 
-  .cta-group-single .cta-pill {
+  .cta-pill {
     width: 100%;
     max-width: none;
     min-height: 44px;
@@ -177,15 +161,10 @@ body {
     justify-content: center;
   }
 
-  .cta-group-single .cta-pill button {
+  .cta-pill button {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-size: 12px;
     text-align: center;
-  }
-}
-
-@container (max-width: 320px) {
-  .cta-group {
-    flex-basis: 100%;
-    justify-content: flex-end;
-    margin-top: 8px;
   }
 }
